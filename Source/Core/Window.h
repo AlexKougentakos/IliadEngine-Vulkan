@@ -14,6 +14,12 @@ namespace ili
 		Window(const int width, const int height, const std::string& name);
 		~Window();
 
+		Window(const Window&) = delete;
+		Window& operator=(const Window&) = delete;
+		Window(Window&&) = delete;
+		Window& operator=(Window&&) = delete;
+
+
 		bool ShouldClose() const { return glfwWindowShouldClose(m_pWindow); }
 	private:
 		void InitializeWindow();

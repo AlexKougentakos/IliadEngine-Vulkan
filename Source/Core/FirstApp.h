@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "Pipeline.h"
 #include "Window.h"
 
 namespace ili
@@ -15,5 +16,6 @@ namespace ili
 
 	private:
 		Window m_Window;
+		Pipeline m_Pipeline{ "Assets/CompiledShaders/shader.vert.spv", "Assets/CompiledShaders/shader.frag.spv" };
 	};
 }

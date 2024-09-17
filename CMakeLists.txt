@@ -38,13 +38,17 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glm)
 
-# Define the source directory
+# Define the source and asset directories
 set(SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Source")
+set(ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Assets")
+set(SHADER_DIR "${ASSETS_DIR}/Shaders")
 
 # Collect all project source files from Source directory
 file(GLOB_RECURSE PROJECT_SOURCES
     "${SOURCE_DIR}/*.cpp"
     "${SOURCE_DIR}/*.h"
+    "${SHADER_DIR}/*.frag"
+    "${SHADER_DIR}/*.vert"
 )
 
 # Define ImGui source files
@@ -88,7 +92,17 @@ target_include_directories(IliadEngine PRIVATE
 # Link Vulkan, GLFW, and GLM libraries
 target_link_libraries(IliadEngine Vulkan::Vulkan glfw)
 
+# Copy Assets folder to the compiled location
+add_custom_command(
+    TARGET IliadEngine POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${ASSETS_DIR} $<TARGET_FILE_DIR:IliadEngine>/Assets
+)
+
 # Additional CMake configurations for Vulkan (optional if needed)
 if(WIN32)
     target_compile_definitions(IliadEngine PRIVATE VK_USE_PLATFORM_WIN32_KHR)
 endif()
+
+# Set working directory to the location of the executable (for Visual Studio .sln files)
+set_property(TARGET IliadEngine PROPERTY VS_DEBUGGER_WORKING_DIRECTORY $<TARGET_FILE_DIR:IliadEngine>)
