@@ -1,5 +1,7 @@
 ﻿#include "Window.h"
 
+#include <stdexcept>
+
 namespace ili
 {
 	Window::Window(const int width, const int height, const std::string& name) 
@@ -12,6 +14,14 @@ namespace ili
 	{
 		glfwDestroyWindow(m_pWindow);
 		glfwTerminate();
+	}
+
+	void Window::CreateWindowSurface(VkInstance instance, VkSurfaceKHR* surface) const
+	{
+		if (glfwCreateWindowSurface(instance, m_pWindow, nullptr, surface) != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to create window surface!");
+		}
 	}
 
 	void Window::InitializeWindow()

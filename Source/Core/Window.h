@@ -21,6 +21,7 @@ namespace ili
 
 
 		bool ShouldClose() const { return glfwWindowShouldClose(m_pWindow); }
+		void CreateWindowSurface(VkInstance instance, VkSurfaceKHR* surface) const;
 	private:
 		void InitializeWindow();
 

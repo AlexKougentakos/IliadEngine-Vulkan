@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "Pipeline.h"
 #include "Window.h"
+#include "Device.h"
 
 namespace ili
 {
@@ -16,6 +17,7 @@ namespace ili
 
 	private:
 		Window m_Window;
-		Pipeline m_Pipeline{ "Assets/CompiledShaders/shader.vert.spv", "Assets/CompiledShaders/shader.frag.spv" };
+		Device m_Device{ m_Window };
+		Pipeline m_Pipeline{ m_Device, "Assets/CompiledShaders/shader.vert.spv", "Assets/CompiledShaders/shader.frag.spv", Pipeline::DefaultPipelineConfigInfo(WIDTH, HEIGHT)};
 	};
 }
