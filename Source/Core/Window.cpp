@@ -28,8 +28,18 @@ namespace ili
 	{
 		glfwInit();
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
 		m_pWindow = glfwCreateWindow(m_Width, m_Height, m_Title.c_str(), nullptr, nullptr);
+		glfwSetWindowUserPointer(m_pWindow, this);
+		glfwSetFramebufferSizeCallback(m_pWindow, FrameBufferResizeCallback);
+	}
+
+	void Window::FrameBufferResizeCallback(GLFWwindow* window, int width, int height)
+	{
+		const auto appWindow = static_cast<Window*>(glfwGetWindowUserPointer(window));
+		appWindow->m_WindowResized = true;
+		appWindow->m_Width = width;
+		appWindow->m_Height = height;
 	}
 }

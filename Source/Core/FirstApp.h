@@ -29,13 +29,16 @@ namespace ili
 		void CreatePipeline();
 		void CreateCommandBuffers();
 
+		void RecreateSwapChain();
+		void RecordCommandBuffer(int imageIdx);
+		
 		void LoadModels();
 
 		void DrawFrame();
 
 		Window m_Window;
 		Device m_Device{ m_Window };
-		SwapChain m_SwapChain{ m_Device, m_Window.GetExtent() };
+		std::unique_ptr<SwapChain> m_pSwapChain{};
 		std::unique_ptr<Pipeline> m_Pipeline;
 		VkPipelineLayout m_PipelineLayout{};
 		std::vector<VkCommandBuffer> m_CommandBuffers{};

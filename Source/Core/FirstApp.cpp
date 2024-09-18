@@ -10,7 +10,7 @@ namespace ili
 	{
 		LoadModels();
 		CreatePipelineLayout();
-		CreatePipeline();
+		RecreateSwapChain();
 		CreateCommandBuffers();
 	}
 
@@ -30,6 +30,39 @@ namespace ili
 		vkDeviceWaitIdle(m_Device.GetDevice());
 	}
 
+	void FirstApp::DrawFrame()
+	{
+		uint32_t imageIndex{};
+		auto result = m_pSwapChain->AcquireNextImage(&imageIndex);
+
+		if (result == VK_ERROR_OUT_OF_DATE_KHR)
+		{
+			RecreateSwapChain();
+			return;
+		}
+
+		if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+		{
+			throw std::runtime_error("Failed to acquire next image");
+		}
+
+		RecordCommandBuffer(imageIndex);
+
+		result = m_pSwapChain->SubmitCommandBuffers(&m_CommandBuffers[imageIndex], &imageIndex);
+
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_Window.WasWindowResized())
+		{
+			m_Window.ResetWindowResizedFlag();
+			RecreateSwapChain();
+			return;
+		}
+
+		if (result != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to submit command buffer");
+		}
+	}
+
 	void FirstApp::CreatePipelineLayout()
 	{
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
@@ -47,15 +80,15 @@ namespace ili
 
 	void FirstApp::CreatePipeline()
 	{
-		auto pipelineConfig = Pipeline::GetDefaultPipelineConfigInfo(m_SwapChain.GetWidth(), m_SwapChain.GetHeight());
-		pipelineConfig.renderPass = m_SwapChain.GetRenderPass();
+		auto pipelineConfig = Pipeline::GetDefaultPipelineConfigInfo(m_pSwapChain->GetWidth(), m_pSwapChain->GetHeight());
+		pipelineConfig.renderPass = m_pSwapChain->GetRenderPass();
 		pipelineConfig.pipelineLayout = m_PipelineLayout;
 		m_Pipeline = std::make_unique<Pipeline>(m_Device, "Assets/CompiledShaders/shader.vert.spv", "Assets/CompiledShaders/shader.frag.spv", pipelineConfig);
 	}
 
 	void FirstApp::CreateCommandBuffers()
 	{
-		m_CommandBuffers.resize(m_SwapChain.ImageCount());
+		m_CommandBuffers.resize(m_pSwapChain->ImageCount());
 
 		VkCommandBufferAllocateInfo commandBufferAllocInfo{};
 		commandBufferAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -67,43 +100,58 @@ namespace ili
 		{
 			throw std::runtime_error("Failed to allocate command buffers");
 		}
+	}
 
-		for (int i{ 0 }; i < m_CommandBuffers.size(); ++i)
+	void FirstApp::RecreateSwapChain()
+	{
+		auto extent = m_Window.GetExtent();
+
+		while (extent.width == 0 || extent.height == 0)
 		{
-			VkCommandBufferBeginInfo beginInfo{};
-			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			extent = m_Window.GetExtent();
+			glfwWaitEvents();
+		}
 
-			if (vkBeginCommandBuffer(m_CommandBuffers[i], &beginInfo) != VK_SUCCESS)
-			{
-				throw std::runtime_error("Failed to begin recording command buffer");
-			}
+		vkDeviceWaitIdle(m_Device.GetDevice());
+		m_pSwapChain = std::make_unique<SwapChain>(m_Device, extent);
+		CreatePipeline();
+	}
 
-			VkRenderPassBeginInfo renderPassInfo{};
-			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			renderPassInfo.renderPass = m_SwapChain.GetRenderPass();
-			renderPassInfo.framebuffer = m_SwapChain.GetFrameBuffer(i);
-			renderPassInfo.renderArea.offset = { 0, 0 };
-			renderPassInfo.renderArea.extent = m_SwapChain.GetSwapChainExtent();
+	void FirstApp::RecordCommandBuffer(int imageIdx)
+	{
+		VkCommandBufferBeginInfo beginInfo{};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-			std::array<VkClearValue, 2> clearValues{};
-			clearValues[0].color = { 0.1f, 0.1f, 0.1f, 1.0f };
-			clearValues[1].depthStencil = { 1.0f, 0 };
+		if (vkBeginCommandBuffer(m_CommandBuffers[imageIdx], &beginInfo) != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to begin recording command buffer");
+		}
 
-			renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-			renderPassInfo.pClearValues = clearValues.data();
+		VkRenderPassBeginInfo renderPassInfo{};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassInfo.renderPass = m_pSwapChain->GetRenderPass();
+		renderPassInfo.framebuffer = m_pSwapChain->GetFrameBuffer(imageIdx);
+		renderPassInfo.renderArea.offset = { 0, 0 };
+		renderPassInfo.renderArea.extent = m_pSwapChain->GetSwapChainExtent();
 
-			vkCmdBeginRenderPass(m_CommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+		std::array<VkClearValue, 2> clearValues{};
+		clearValues[0].color = { 0.1f, 0.1f, 0.1f, 1.0f };
+		clearValues[1].depthStencil = { 1.0f, 0 };
 
-			m_Pipeline->Bind(m_CommandBuffers[i]);
-			m_pModel->Bind(m_CommandBuffers[i]);
-			m_pModel->Draw(m_CommandBuffers[i]);
+		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+		renderPassInfo.pClearValues = clearValues.data();
 
-			vkCmdEndRenderPass(m_CommandBuffers[i]);
+		vkCmdBeginRenderPass(m_CommandBuffers[imageIdx], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-			if (vkEndCommandBuffer(m_CommandBuffers[i]) != VK_SUCCESS)
-			{
-				throw std::runtime_error("Failed to record command buffer");
-			}
+		m_Pipeline->Bind(m_CommandBuffers[imageIdx]);
+		m_pModel->Bind(m_CommandBuffers[imageIdx]);
+		m_pModel->Draw(m_CommandBuffers[imageIdx]);
+
+		vkCmdEndRenderPass(m_CommandBuffers[imageIdx]);
+
+		if (vkEndCommandBuffer(m_CommandBuffers[imageIdx]) != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to record command buffer");
 		}
 	}
 
@@ -119,20 +167,5 @@ namespace ili
 		m_pModel = std::make_unique<Model>(m_Device, vertices);
 	}
 
-	void FirstApp::DrawFrame()
-	{
-		uint32_t imageIndex{};
-		auto result = m_SwapChain.AcquireNextImage(&imageIndex);
 
-		if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
-		{
-			throw std::runtime_error("Failed to acquire next image");
-		}
-
-		result = m_SwapChain.SubmitCommandBuffers(&m_CommandBuffers[imageIndex], &imageIndex);
-		if (result != VK_SUCCESS)
-		{
-			throw std::runtime_error("Failed to submit command buffer");
-		}
-	}
 }
