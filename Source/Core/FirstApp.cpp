@@ -111,9 +111,9 @@ namespace ili
 	{
 		std::vector<Model::Vertex> vertices
 		{
-			{{0.0f, -0.5f}},
-			{{0.5f, 0.5f}},
-			{{-0.5f, 0.5f}}
+			{{0.0f, -0.5f}, {1.f, 0.f, 0.f}},
+			{{0.5f, 0.5f}, {0.f, 1.f, 0.f}},
+			{{-0.5f, 0.5f}, {0.f, 0.f, 1.f}}
 		};
 
 		m_pModel = std::make_unique<Model>(m_Device, vertices);
