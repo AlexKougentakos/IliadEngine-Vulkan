@@ -4,6 +4,7 @@
 #include "../Graphics/Pipeline.h"
 #include "../Graphics/Device.h"
 #include "../Graphics/SwapChain.h"
+#include "Graphics/Model.h"
 
 namespace ili
 {
@@ -28,6 +29,8 @@ namespace ili
 		void CreatePipeline();
 		void CreateCommandBuffers();
 
+		void LoadModels();
+
 		void DrawFrame();
 
 		Window m_Window;
@@ -36,5 +39,7 @@ namespace ili
 		std::unique_ptr<Pipeline> m_Pipeline;
 		VkPipelineLayout m_PipelineLayout{};
 		std::vector<VkCommandBuffer> m_CommandBuffers{};
+
+		std::unique_ptr<Model> m_pModel{};
 	};
 }

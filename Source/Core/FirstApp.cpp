@@ -8,6 +8,7 @@ namespace ili
 {
 	FirstApp::FirstApp() : m_Window(WIDTH, HEIGHT, "Iliad Engine - Vulkan")
 	{
+		LoadModels();
 		CreatePipelineLayout();
 		CreatePipeline();
 		CreateCommandBuffers();
@@ -94,7 +95,8 @@ namespace ili
 			vkCmdBeginRenderPass(m_CommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 			m_Pipeline->Bind(m_CommandBuffers[i]);
-			vkCmdDraw(m_CommandBuffers[i], 3, 1, 0, 0);
+			m_pModel->Bind(m_CommandBuffers[i]);
+			m_pModel->Draw(m_CommandBuffers[i]);
 
 			vkCmdEndRenderPass(m_CommandBuffers[i]);
 
@@ -103,6 +105,18 @@ namespace ili
 				throw std::runtime_error("Failed to record command buffer");
 			}
 		}
+	}
+
+	void FirstApp::LoadModels()
+	{
+		std::vector<Model::Vertex> vertices
+		{
+			{{0.0f, -0.5f}},
+			{{0.5f, 0.5f}},
+			{{-0.5f, 0.5f}}
+		};
+
+		m_pModel = std::make_unique<Model>(m_Device, vertices);
 	}
 
 	void FirstApp::DrawFrame()
