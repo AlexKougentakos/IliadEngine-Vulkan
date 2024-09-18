@@ -82,6 +82,7 @@ namespace ili
 		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
 		vertexInputInfo.pVertexBindingDescriptions = bindingDescriptions.data();
 		vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+
 		VkGraphicsPipelineCreateInfo pipelineInfo{};
 		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 		pipelineInfo.stageCount = 2;
@@ -99,8 +100,8 @@ namespace ili
 		pipelineInfo.renderPass = configInfo.renderPass;
 		pipelineInfo.subpass = configInfo.subpass;
 
-		pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 		pipelineInfo.basePipelineIndex = -1;
+		pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
         if (vkCreateGraphicsPipelines(m_Device.GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_GraphicsPipeline) != VK_SUCCESS)
         {
@@ -134,7 +135,6 @@ namespace ili
 		configInfoInOut.viewportInfo.pViewports = nullptr; 
 		configInfoInOut.viewportInfo.scissorCount = 1; // Use a single scissor rectangle
 		configInfoInOut.viewportInfo.pScissors = nullptr;
-
 
         configInfoInOut.rasterizationInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO; // Specify the type of rasterization state structure
         configInfoInOut.rasterizationInfo.depthClampEnable = VK_FALSE; // Disable depth clamping to keep fragments within depth range

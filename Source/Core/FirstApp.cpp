@@ -3,9 +3,21 @@
 #include <array>
 #include <stdexcept>
 
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/glm.hpp>
+
 
 namespace ili
 {
+	struct SimplePushConstantData
+	{
+		glm::vec2 offset{};
+		alignas(16) glm::vec3 color{};
+		//Use alignas because a three component item needs to be equal to 4 times its scalar alignment size
+		//Aka multiples of 2 of the original size. In this case, 4 bytes for a float, so 4 * 4 = 16
+	};
+
 	FirstApp::FirstApp() : m_Window(WIDTH, HEIGHT, "Iliad Engine - Vulkan")
 	{
 		LoadModels();
@@ -65,12 +77,19 @@ namespace ili
 
 	void FirstApp::CreatePipelineLayout()
 	{
+		VkPushConstantRange pushConstantRange{};
+		pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+		pushConstantRange.offset = 0;
+		pushConstantRange.size = sizeof(SimplePushConstantData);
+
+
+
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipelineLayoutInfo.setLayoutCount = 0;
 		pipelineLayoutInfo.pSetLayouts = nullptr;
-		pipelineLayoutInfo.pushConstantRangeCount = 0;
-		pipelineLayoutInfo.pPushConstantRanges = nullptr;
+		pipelineLayoutInfo.pushConstantRangeCount = 1;
+		pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 
 		if (vkCreatePipelineLayout(m_Device.GetDevice(), &pipelineLayoutInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS)
 		{
@@ -173,7 +192,17 @@ namespace ili
 
 		m_Pipeline->Bind(m_CommandBuffers[imageIdx]);
 		m_pModel->Bind(m_CommandBuffers[imageIdx]);
-		m_pModel->Draw(m_CommandBuffers[imageIdx]);
+
+		for (int i = 0; i < 4; i++)		
+		{
+			SimplePushConstantData push{};
+			push.offset = { 0.f, -0.4 + i * 0.25f};
+			push.color= { 0.f, 0.f, 0.2f + 0.2f * i};
+
+			vkCmdPushConstants(m_CommandBuffers[imageIdx], m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &push);
+
+			m_pModel->Draw(m_CommandBuffers[imageIdx]);
+		}
 
 		vkCmdEndRenderPass(m_CommandBuffers[imageIdx]);
 
