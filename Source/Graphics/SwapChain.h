@@ -12,7 +12,9 @@ namespace ili
     public:
         static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
+        void Intialize();
         SwapChain(Device& deviceRef, VkExtent2D windowExtent);
+        SwapChain(Device& deviceRef, VkExtent2D windowExtent, std::shared_ptr<SwapChain> previous);
         ~SwapChain();
 
         SwapChain(const SwapChain&) = delete;
@@ -20,47 +22,47 @@ namespace ili
 
         VkFramebuffer GetFrameBuffer(int index)
         {
-            return m_swapChainFramebuffers[index];
+            return m_SwapChainFramebuffers[index];
         }
 
         VkRenderPass GetRenderPass()
         {
-            return m_renderPass;
+            return m_RenderPass;
         }
 
         VkImageView GetImageView(int index)
         {
-            return m_swapChainImageViews[index];
+            return m_SwapChainImageViews[index];
         }
 
         size_t ImageCount()
         {
-            return m_swapChainImages.size();
+            return m_SwapChainImages.size();
         }
 
         VkFormat GetSwapChainImageFormat()
         {
-            return m_swapChainImageFormat;
+            return m_SwapChainImageFormat;
         }
 
         VkExtent2D GetSwapChainExtent()
         {
-            return m_swapChainExtent;
+            return m_SwapChainExtent;
         }
 
         uint32_t GetWidth()
         {
-            return m_swapChainExtent.width;
+            return m_SwapChainExtent.width;
         }
 
         uint32_t GetHeight()
         {
-            return m_swapChainExtent.height;
+            return m_SwapChainExtent.height;
         }
 
         float ExtentAspectRatio()
         {
-            return static_cast<float>(m_swapChainExtent.width) / static_cast<float>(m_swapChainExtent.height);
+            return static_cast<float>(m_SwapChainExtent.width) / static_cast<float>(m_SwapChainExtent.height);
         }
 
         VkFormat FindDepthFormat();
@@ -83,27 +85,28 @@ namespace ili
             const std::vector<VkPresentModeKHR>& availablePresentModes);
         VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 
-        VkFormat m_swapChainImageFormat;
-        VkExtent2D m_swapChainExtent;
+        VkFormat m_SwapChainImageFormat{};
+        VkExtent2D m_SwapChainExtent{};
 
-        std::vector<VkFramebuffer> m_swapChainFramebuffers;
-        VkRenderPass m_renderPass;
+        std::vector<VkFramebuffer> m_SwapChainFramebuffers{};
+        VkRenderPass m_RenderPass{};
 
-        std::vector<VkImage> m_depthImages;
-        std::vector<VkDeviceMemory> m_depthImageMemorys;
-        std::vector<VkImageView> m_depthImageViews;
-        std::vector<VkImage> m_swapChainImages;
-        std::vector<VkImageView> m_swapChainImageViews;
+        std::vector<VkImage> m_DepthImages{};
+        std::vector<VkDeviceMemory> m_DepthImageMemorys{};
+        std::vector<VkImageView> m_DepthImageViews{};
+        std::vector<VkImage> m_SwapChainImages{};
+        std::vector<VkImageView> m_SwapChainImageViews{};
 
-        ili::Device& m_device;
-        VkExtent2D m_windowExtent;
+        ili::Device& m_Device;
+        VkExtent2D m_WindowExtent{};
 
-        VkSwapchainKHR m_swapChain;
+        VkSwapchainKHR m_SwapChain{};
+        std::shared_ptr<SwapChain> m_OldSwapChain{};
 
-        std::vector<VkSemaphore> m_imageAvailableSemaphores;
-        std::vector<VkSemaphore> m_renderFinishedSemaphores;
-        std::vector<VkFence> m_inFlightFences;
-        std::vector<VkFence> m_imagesInFlight;
-        size_t m_currentFrame = 0;
+        std::vector<VkSemaphore> m_ImageAvailableSemaphores{};
+        std::vector<VkSemaphore> m_RenderFinishedSemaphores{};
+        std::vector<VkFence> m_InFlightFences{};
+        std::vector<VkFence> m_ImagesInFlight{};
+        size_t m_CurrentFrame = 0;
     };
 }

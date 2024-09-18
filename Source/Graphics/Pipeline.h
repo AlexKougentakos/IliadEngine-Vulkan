@@ -8,17 +8,20 @@ namespace ili
 
 	struct PipelineConfigInfo
 	{
-		VkViewport viewport{};
-		VkRect2D scissor{};
+		VkPipelineViewportStateCreateInfo viewportInfo{};
 		VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};
 		VkPipelineRasterizationStateCreateInfo rasterizationInfo{};
 		VkPipelineMultisampleStateCreateInfo multisampleInfo{};
 		VkPipelineColorBlendAttachmentState colorBlendAttachment{};
 		VkPipelineColorBlendStateCreateInfo colorBlendInfo{};
 		VkPipelineDepthStencilStateCreateInfo depthStencilInfo{};
+		std::vector<VkDynamicState> dynamicStateEnables{};
+		VkPipelineDynamicStateCreateInfo dynamicStateInfo{};
 		VkPipelineLayout pipelineLayout{};
 		VkRenderPass renderPass{};
 		uint32_t subpass{};
+
+		
 	};
 
 	class Pipeline
@@ -32,7 +35,7 @@ namespace ili
 		Pipeline& operator=(const Pipeline& other) = delete;
 		Pipeline& operator=(Pipeline&& other) noexcept = delete;
 
-		static PipelineConfigInfo GetDefaultPipelineConfigInfo(uint32_t width, uint32_t height);
+		static void GetDefaultPipelineConfigInfo(PipelineConfigInfo& configInfoInOut);
 
 		void Bind(VkCommandBuffer commandBuffer);
 	private:

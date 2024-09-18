@@ -80,7 +80,10 @@ namespace ili
 
 	void FirstApp::CreatePipeline()
 	{
-		auto pipelineConfig = Pipeline::GetDefaultPipelineConfigInfo(m_pSwapChain->GetWidth(), m_pSwapChain->GetHeight());
+		PipelineConfigInfo pipelineConfig{};
+
+		Pipeline::GetDefaultPipelineConfigInfo(pipelineConfig);
+
 		pipelineConfig.renderPass = m_pSwapChain->GetRenderPass();
 		pipelineConfig.pipelineLayout = m_PipelineLayout;
 		m_Pipeline = std::make_unique<Pipeline>(m_Device, "Assets/CompiledShaders/shader.vert.spv", "Assets/CompiledShaders/shader.frag.spv", pipelineConfig);
@@ -113,7 +116,19 @@ namespace ili
 		}
 
 		vkDeviceWaitIdle(m_Device.GetDevice());
-		m_pSwapChain = std::make_unique<SwapChain>(m_Device, extent);
+
+		if (m_pSwapChain == nullptr)
+		{
+			m_pSwapChain = std::make_unique<SwapChain>(m_Device, extent);
+		}
+		else
+		{
+			m_pSwapChain = std::make_unique<SwapChain>(m_Device, extent, std::move(m_pSwapChain));
+			if (m_pSwapChain->ImageCount() != m_CommandBuffers.size())
+			{
+				CreateCommandBuffers();
+			}
+		}
 		CreatePipeline();
 	}
 
@@ -143,6 +158,19 @@ namespace ili
 
 		vkCmdBeginRenderPass(m_CommandBuffers[imageIdx], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+		VkViewport viewport{};
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = static_cast<float>(m_pSwapChain->GetSwapChainExtent().width);
+		viewport.height = static_cast<float>(m_pSwapChain->GetSwapChainExtent().height);
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+
+		VkRect2D scissor{ {0, 0}, m_pSwapChain->GetSwapChainExtent() };
+		vkCmdSetViewport(m_CommandBuffers[imageIdx], 0, 1, &viewport);
+		vkCmdSetScissor(m_CommandBuffers[imageIdx], 0, 1, &scissor);
+
+
 		m_Pipeline->Bind(m_CommandBuffers[imageIdx]);
 		m_pModel->Bind(m_CommandBuffers[imageIdx]);
 		m_pModel->Draw(m_CommandBuffers[imageIdx]);
@@ -153,6 +181,12 @@ namespace ili
 		{
 			throw std::runtime_error("Failed to record command buffer");
 		}
+	}
+
+	void FirstApp::FreeCommandBuffers()
+	{
+		vkFreeCommandBuffers(m_Device.GetDevice(), m_Device.GetCommandPool(), static_cast<uint32_t>(m_CommandBuffers.size()), m_CommandBuffers.data());
+		m_CommandBuffers.clear();
 	}
 
 	void FirstApp::LoadModels()

@@ -32,6 +32,8 @@ namespace ili
 		void RecreateSwapChain();
 		void RecordCommandBuffer(int imageIdx);
 		
+		void FreeCommandBuffers();
+
 		void LoadModels();
 
 		void DrawFrame();
