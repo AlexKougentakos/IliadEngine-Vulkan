@@ -5,6 +5,7 @@
 #include "../Graphics/Device.h"
 #include "../Graphics/SwapChain.h"
 #include "Graphics/Model.h"
+#include "SceneGraph/GameObject.h"
 
 namespace ili
 {
@@ -34,7 +35,8 @@ namespace ili
 		
 		void FreeCommandBuffers();
 
-		void LoadModels();
+		void LoadGameObjects();
+		void RenderGameObjects(VkCommandBuffer commandBuffer);
 
 		void DrawFrame();
 
@@ -45,6 +47,6 @@ namespace ili
 		VkPipelineLayout m_PipelineLayout{};
 		std::vector<VkCommandBuffer> m_CommandBuffers{};
 
-		std::unique_ptr<Model> m_pModel{};
+		std::vector<GameObject> m_GameObjects{};
 	};
 }

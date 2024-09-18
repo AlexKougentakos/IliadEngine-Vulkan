@@ -7,11 +7,12 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 
-
+#include "../SceneGraph/GameObject.h"
 namespace ili
 {
 	struct SimplePushConstantData
 	{
+		glm::mat2 transform{ 1.f }; //Identity matrix
 		glm::vec2 offset{};
 		alignas(16) glm::vec3 color{};
 		//Use alignas because a three component item needs to be equal to 4 times its scalar alignment size
@@ -20,7 +21,7 @@ namespace ili
 
 	FirstApp::FirstApp() : m_Window(WIDTH, HEIGHT, "Iliad Engine - Vulkan")
 	{
-		LoadModels();
+		LoadGameObjects();
 		CreatePipelineLayout();
 		RecreateSwapChain();
 		CreateCommandBuffers();
@@ -156,7 +157,9 @@ namespace ili
 		VkCommandBufferBeginInfo beginInfo{};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-		if (vkBeginCommandBuffer(m_CommandBuffers[imageIdx], &beginInfo) != VK_SUCCESS)
+		const auto currentCommandBuffer = m_CommandBuffers[imageIdx];
+
+		if (vkBeginCommandBuffer(currentCommandBuffer, &beginInfo) != VK_SUCCESS)
 		{
 			throw std::runtime_error("Failed to begin recording command buffer");
 		}
@@ -175,7 +178,7 @@ namespace ili
 		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 		renderPassInfo.pClearValues = clearValues.data();
 
-		vkCmdBeginRenderPass(m_CommandBuffers[imageIdx], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBeginRenderPass(currentCommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 		VkViewport viewport{};
 		viewport.x = 0.0f;
@@ -186,27 +189,15 @@ namespace ili
 		viewport.maxDepth = 1.0f;
 
 		VkRect2D scissor{ {0, 0}, m_pSwapChain->GetSwapChainExtent() };
-		vkCmdSetViewport(m_CommandBuffers[imageIdx], 0, 1, &viewport);
-		vkCmdSetScissor(m_CommandBuffers[imageIdx], 0, 1, &scissor);
+		vkCmdSetViewport(currentCommandBuffer, 0, 1, &viewport);
+		vkCmdSetScissor(currentCommandBuffer, 0, 1, &scissor);
 
 
-		m_Pipeline->Bind(m_CommandBuffers[imageIdx]);
-		m_pModel->Bind(m_CommandBuffers[imageIdx]);
+		RenderGameObjects(currentCommandBuffer);
 
-		for (int i = 0; i < 4; i++)		
-		{
-			SimplePushConstantData push{};
-			push.offset = { 0.f, -0.4 + i * 0.25f};
-			push.color= { 0.f, 0.f, 0.2f + 0.2f * i};
+		vkCmdEndRenderPass(currentCommandBuffer);
 
-			vkCmdPushConstants(m_CommandBuffers[imageIdx], m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &push);
-
-			m_pModel->Draw(m_CommandBuffers[imageIdx]);
-		}
-
-		vkCmdEndRenderPass(m_CommandBuffers[imageIdx]);
-
-		if (vkEndCommandBuffer(m_CommandBuffers[imageIdx]) != VK_SUCCESS)
+		if (vkEndCommandBuffer(currentCommandBuffer) != VK_SUCCESS)
 		{
 			throw std::runtime_error("Failed to record command buffer");
 		}
@@ -218,7 +209,7 @@ namespace ili
 		m_CommandBuffers.clear();
 	}
 
-	void FirstApp::LoadModels()
+	void FirstApp::LoadGameObjects()
 	{
 		std::vector<Model::Vertex> vertices
 		{
@@ -227,8 +218,30 @@ namespace ili
 			{{-0.5f, 0.5f}, {0.f, 0.f, 1.f}}
 		};
 
-		m_pModel = std::make_unique<Model>(m_Device, vertices);
+		const auto model = std::make_shared<Model>(m_Device, vertices);
+
+		auto triangle = GameObject::Create();
+		triangle.SetModel(model);
+		triangle.SetColor({ .1f, .8f, .1f });
+		triangle.Translate( {.2f, 0.f});
+
+		m_GameObjects.push_back(std::move(triangle));
 	}
 
+	void FirstApp::RenderGameObjects(VkCommandBuffer commandBuffer)
+	{
+		m_Pipeline->Bind(commandBuffer);
+		for (const auto& gameObject : m_GameObjects)
+		{
+			SimplePushConstantData pushData{};
+			pushData.offset = gameObject.GetTransformConst().position;
+			pushData.color = gameObject.GetColor();
+			pushData.transform = gameObject.GetTransformConst().GetMatrix();
 
+			vkCmdPushConstants(commandBuffer, m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &pushData);
+
+			gameObject.GetModel()->Bind(commandBuffer);
+			gameObject.GetModel()->Draw(commandBuffer);
+		}
+	}
 }
