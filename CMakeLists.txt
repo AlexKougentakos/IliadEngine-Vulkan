@@ -65,21 +65,6 @@ set(IMGUI_FILES
 # Add executable with project sources and ImGui files
 add_executable(IliadEngine ${PROJECT_SOURCES} ${IMGUI_FILES})
 
-# Create source groups for Visual Studio filters based on folder structure
-if(MSVC)
-    # Group project source files based on their directory structure
-    foreach(source_file ${PROJECT_SOURCES})
-        get_filename_component(dir ${source_file} DIRECTORY)
-        file(RELATIVE_PATH rel_dir ${SOURCE_DIR} ${dir})
-        # Replace '/' with '\' for Visual Studio compatibility
-        string(REPLACE "/" "\\" group_name ${rel_dir})
-        source_group("${group_name}" FILES "${source_file}")
-    endforeach()
-
-    # Group ImGui files into their own 'ImGui' filter
-    source_group("ImGui" FILES ${IMGUI_FILES})
-endif()
-
 # Include directories for GLFW, ImGui, its backends, glm, and your Source directory
 target_include_directories(IliadEngine PRIVATE 
     ${glfw_SOURCE_DIR}/include
@@ -92,12 +77,63 @@ target_include_directories(IliadEngine PRIVATE
 # Link Vulkan, GLFW, and GLM libraries
 target_link_libraries(IliadEngine Vulkan::Vulkan glfw)
 
-# Copy Assets folder to the compiled location
-add_custom_command(
-    TARGET IliadEngine POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${ASSETS_DIR} $<TARGET_FILE_DIR:IliadEngine>/Assets
-)
+# ------------------------------------------------------------------------
+# Visual Studio Specific Configurations
+# ------------------------------------------------------------------------
+if(MSVC)
+    # Create source groups for Visual Studio filters based on folder structure
+    foreach(source_file ${PROJECT_SOURCES})
+        get_filename_component(dir ${source_file} DIRECTORY)
+        file(RELATIVE_PATH rel_dir ${SOURCE_DIR} ${dir})
+        # Replace '/' with '\' for Visual Studio compatibility
+        string(REPLACE "/" "\\" group_name ${rel_dir})
+        source_group("${group_name}" FILES "${source_file}")
+    endforeach()
+
+    # Group ImGui files into their own 'ImGui' filter
+    source_group("ImGui" FILES ${IMGUI_FILES})
+
+    # ------------------------------------------------------------------------
+    # Custom Build Steps for Shader Compilation and Asset Copying
+    # ------------------------------------------------------------------------
+
+    # Find all shader files (.frag and .vert)
+    file(GLOB_RECURSE SHADER_FILES "${SHADER_DIR}/*.frag" "${SHADER_DIR}/*.vert")
+
+    # Add a pre-build step to compile shaders using CompileShaders.bat
+    add_custom_command(TARGET IliadEngine PRE_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E echo "Compiling shaders..."
+    )
+    
+    add_custom_command(TARGET IliadEngine PRE_BUILD
+        COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/CompileShaders.bat"
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMENT "Running CompileShaders.bat to compile shaders..."
+        VERBATIM
+        DEPENDS ${SHADER_FILES}
+    )
+
+    # Add a pre-build step to copy assets after shader compilation
+    add_custom_command(TARGET IliadEngine PRE_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${ASSETS_DIR}" "$<TARGET_FILE_DIR:IliadEngine>/Assets"
+        COMMENT "Copying Assets to the executable directory..."
+        VERBATIM
+    )
+endif()
+
+# ------------------------------------------------------------------------
+# Post-Build Step to Copy Assets (Removed to Prevent Cyclic Dependency)
+# ------------------------------------------------------------------------
+# The post-build asset copying is removed to avoid conflicting with pre-build steps
+# If you prefer to keep asset copying here instead of pre-build, ensure that pre-build steps do not copy assets
+
+# Remove or comment out the existing post-build asset copy to prevent duplication and potential cycles
+# add_custom_command(
+#     TARGET IliadEngine POST_BUILD
+#     COMMAND ${CMAKE_COMMAND} -E copy_directory
+#     "${ASSETS_DIR}" "$<TARGET_FILE_DIR:IliadEngine>/Assets"
+# )
 
 # Additional CMake configurations for Vulkan (optional if needed)
 if(WIN32)
@@ -105,4 +141,4 @@ if(WIN32)
 endif()
 
 # Set working directory to the location of the executable (for Visual Studio .sln files)
-set_property(TARGET IliadEngine PROPERTY VS_DEBUGGER_WORKING_DIRECTORY $<TARGET_FILE_DIR:IliadEngine>)
+set_property(TARGET IliadEngine PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:IliadEngine>")

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Window.h"
+#include "../Core/Window.h"
 
 // Standard Library Headers
 #include <string>

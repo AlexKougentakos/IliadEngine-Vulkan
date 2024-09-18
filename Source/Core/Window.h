@@ -22,6 +22,8 @@ namespace ili
 
 		bool ShouldClose() const { return glfwWindowShouldClose(m_pWindow); }
 		void CreateWindowSurface(VkInstance instance, VkSurfaceKHR* surface) const;
+
+		VkExtent2D GetExtent() const { return { static_cast<uint32_t>(m_Width), static_cast<uint32_t>(m_Height) }; }
 	private:
 		void InitializeWindow();
 
