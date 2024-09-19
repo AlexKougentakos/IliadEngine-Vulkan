@@ -1,7 +1,27 @@
 #include "Model.h"
-
+#include "../Core/Utils.h"
 #include <stdexcept>
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <iostream>
+#include <glm/gtx/hash.hpp>
+
+#include <unordered_map>
+
+namespace std
+{
+	template<>
+	struct hash<ili::Model::Vertex>
+	{
+		size_t operator()(ili::Model::Vertex const& vertex) const noexcept
+		{
+			size_t seed = 0;
+			ili::Utils::HashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.texCoord);
+			return seed;
+
+		}
+	};
+}
 
 namespace ili
 {
@@ -55,6 +75,7 @@ namespace ili
 		vertices.clear();
 		indices.clear();
 
+		std::unordered_map<Vertex, uint32_t> uniqueVertices{}; //Map of vertices to their index
 		for (const auto& shape : shapes)
 		{
 			for (const auto& index : shape.mesh.indices)
@@ -105,9 +126,16 @@ namespace ili
 					};
 				}
 
-				vertices.emplace_back(vertex);
+				if (!uniqueVertices.contains(vertex))
+				{
+					uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+					vertices.push_back(vertex);
+				}
+				indices.emplace_back(uniqueVertices[vertex]);
 			}
 		}
+
+		std::cout << "Loaded model with " << vertices.size() << " vertices and " << indices.size() << " indices\n";
 	}
 
 	Model::Model(Device& device, const Builder& builder)
