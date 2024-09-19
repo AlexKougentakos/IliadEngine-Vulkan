@@ -84,7 +84,7 @@ namespace ili
 		vaseObject.SetModel(vase);
 		vaseObject.GetTransform().position = { 0.5f, 0.f, 0.5f };
 		vaseObject.GetTransform().rotation = { 0.f, 0.f, 0.f };
-		vaseObject.GetTransform().scale = { 1.f, 1.f, 1.f };
+		vaseObject.GetTransform().scale = { 1.f, .5f, 1.f };
 
 		m_GameObjects.emplace_back(cube);
 		m_GameObjects.emplace_back(vaseObject);

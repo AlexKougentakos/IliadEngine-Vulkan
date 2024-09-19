@@ -16,7 +16,7 @@ namespace ili
 	struct SimplePushConstantData
 	{
 		glm::mat4 transform{ 1.f }; //Identity matrix
-		glm::mat4 modelMatrix{ 1.f }; //Identity matrix
+		glm::mat4 normalMatrix{ 1.f }; //Identity matrix
 	};
 
 	RenderSystem::RenderSystem(Device& device, VkRenderPass renderPass) : m_Device(device)
@@ -76,7 +76,7 @@ namespace ili
 
 			SimplePushConstantData pushData{};
 			pushData.transform = projectionView * modelMatrix;
-			pushData.modelMatrix = modelMatrix;
+			pushData.normalMatrix = gameObject.GetTransformConst().GetNormalMatrix();
 
 			vkCmdPushConstants(commandBuffer, m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &pushData);
 
