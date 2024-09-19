@@ -3,8 +3,7 @@
 
 #include "../Graphics/Pipeline.h"
 #include "../Graphics/Device.h"
-#include "../Graphics/SwapChain.h"
-#include "Graphics/Model.h"
+#include "Renderer.h"
 #include "SceneGraph/GameObject.h"
 
 namespace ili
@@ -28,24 +27,15 @@ namespace ili
 	private:
 		void CreatePipelineLayout();
 		void CreatePipeline();
-		void CreateCommandBuffers();
-
-		void RecreateSwapChain();
-		void RecordCommandBuffer(int imageIdx);
-		
-		void FreeCommandBuffers();
 
 		void LoadGameObjects();
 		void RenderGameObjects(VkCommandBuffer commandBuffer);
 
-		void DrawFrame();
-
 		Window m_Window;
 		Device m_Device{ m_Window };
-		std::unique_ptr<SwapChain> m_pSwapChain{};
+		Renderer m_Renderer{ m_Window, m_Device };
 		std::unique_ptr<Pipeline> m_Pipeline;
 		VkPipelineLayout m_PipelineLayout{};
-		std::vector<VkCommandBuffer> m_CommandBuffers{};
 
 		std::vector<GameObject> m_GameObjects{};
 	};
