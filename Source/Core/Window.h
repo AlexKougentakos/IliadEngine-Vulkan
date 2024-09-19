@@ -1,9 +1,9 @@
 ﻿#pragma once
 #include <memory>
 
-#define GLFW_INCLUDE_VULKAN
 #include <string>
 
+#define GLFW_INCLUDE_VULKAN
 #include "GLFW/glfw3.h"
 
 namespace ili
@@ -19,6 +19,7 @@ namespace ili
 		Window(Window&&) = delete;
 		Window& operator=(Window&&) = delete;
 
+		GLFWwindow* GetWindow() const { return m_pWindow; }
 
 		bool ShouldClose() const { return glfwWindowShouldClose(m_pWindow); }
 		void CreateWindowSurface(VkInstance instance, VkSurfaceKHR* surface) const;

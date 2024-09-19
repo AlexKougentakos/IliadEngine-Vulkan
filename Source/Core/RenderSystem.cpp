@@ -67,20 +67,16 @@ namespace ili
 
 	void RenderSystem::RenderGameObjects(VkCommandBuffer commandBuffer, std::vector<GameObject>& gameObjects, const Camera& camera)
 	{
-		int i = 0;
-		for (auto& object : gameObjects)
-		{
-			i += 1;
-			object.GetTransform().rotation.y = glm::mod<float>(object.GetTransform().rotation.y + 0.01f, glm::two_pi<float>());
-			object.GetTransform().rotation.x = glm::mod<float>(object.GetTransform().rotation.x + 0.01f, glm::two_pi<float>());
-		}
-
 		m_Pipeline->Bind(commandBuffer);
+
+		//Every rendered object will use the same projection and view matrix, so we don't need to do the calculation for each object
+		const auto projectionView = camera.GetProjection() * camera.GetView();
+
 		for (const auto& gameObject : gameObjects)
 		{
 			SimplePushConstantData pushData{};
 			pushData.color = gameObject.GetColor();
-			pushData.transform = camera.GetProjection() * gameObject.GetTransformConst().GetMatrix();
+			pushData.transform = projectionView * gameObject.GetTransformConst().GetMatrix();
 
 			vkCmdPushConstants(commandBuffer, m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &pushData);
 
