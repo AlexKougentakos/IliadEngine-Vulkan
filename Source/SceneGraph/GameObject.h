@@ -8,8 +8,18 @@ namespace ili
 	struct Transform2DComponent
 	{
 		glm::vec2 position{};
+		glm::vec2 scale{ 1.f, 1.f };
+		float rotation{ 0.f };
 
-		glm::mat2 GetMatrix() const { return glm::mat2{ 1.f }; }; //Identity matrix
+		glm::mat2 GetMatrix() const 
+		{ 
+			const float sin = glm::sin(rotation);
+			const float cos = glm::cos(rotation);
+			const glm::mat2 rotationMatrix{ { cos, sin }, { -sin, cos } };
+
+			const glm::mat2 scaleMatrix{ { scale.x, 0.f }, { 0.f, scale.y } };
+			return rotationMatrix * scaleMatrix;
+		} //Identity matrix
 	};
 
 	class GameObject

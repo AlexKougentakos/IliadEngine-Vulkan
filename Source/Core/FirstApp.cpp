@@ -8,6 +8,8 @@
 #include <glm/glm.hpp>
 
 #include "../SceneGraph/GameObject.h"
+#include "glm/gtc/constants.hpp"
+
 namespace ili
 {
 	struct SimplePushConstantData
@@ -220,16 +222,27 @@ namespace ili
 
 		const auto model = std::make_shared<Model>(m_Device, vertices);
 
-		auto triangle = GameObject::Create();
-		triangle.SetModel(model);
-		triangle.SetColor({ .1f, .8f, .1f });
-		triangle.Translate( {.2f, 0.f});
+		for (int i{}; i < 10; i++)
+		{
+			auto triangle = GameObject::Create();
+			triangle.SetModel(model);
+			//Randomize the color
+			triangle.SetColor({ static_cast<float>(rand()) / RAND_MAX, static_cast<float>(rand()) / RAND_MAX, static_cast<float>(rand()) / RAND_MAX });
+			triangle.GetTransform().scale = { 0.3f * i, .3f * i };
 
-		m_GameObjects.push_back(std::move(triangle));
+			m_GameObjects.push_back(std::move(triangle));
+		}
 	}
 
 	void FirstApp::RenderGameObjects(VkCommandBuffer commandBuffer)
 	{
+		int i = 0;
+		for (auto& object : m_GameObjects)
+		{
+			i += 1;
+			object.GetTransform().rotation = glm::mod<float>(object.GetTransform().rotation + 0.001f, glm::two_pi<float>());
+		}
+
 		m_Pipeline->Bind(commandBuffer);
 		for (const auto& gameObject : m_GameObjects)
 		{
