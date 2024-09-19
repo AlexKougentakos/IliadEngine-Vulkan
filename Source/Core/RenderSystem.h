@@ -2,6 +2,7 @@
 
 #include "../Graphics/Pipeline.h"
 #include "../Graphics/Device.h"
+#include "SceneGraph/Camera.h"
 #include "SceneGraph/GameObject.h"
 
 namespace ili
@@ -17,7 +18,7 @@ namespace ili
 		RenderSystem(RenderSystem&&) = delete;
 		RenderSystem& operator=(RenderSystem&&) = delete;
 
-		void RenderGameObjects(VkCommandBuffer commandBuffer, std::vector<GameObject>& gameObjects);
+		void RenderGameObjects(VkCommandBuffer commandBuffer, std::vector<GameObject>& gameObjects, const Camera& camera);
 	private:
 		void CreatePipelineLayout();
 		void CreatePipeline(VkRenderPass renderPass);

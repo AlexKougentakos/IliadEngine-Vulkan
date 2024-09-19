@@ -12,12 +12,12 @@ namespace ili
 		glm::vec3 scale{ 1.f, 1.f, 1.f };
 		glm::vec3 rotation{0.f};
 
-		// Matrix corrsponds to Translate * Ry * Rx * Rz * Scale
 		// Rotations correspond to Tait-bryan angles of Y(1), X(2), Z(3)
 		// To read the rotations as Intrinsic (local) read left to right. To read as Extrinsic (global) read right to left
 		// Optimization to not calculate the matrices entirely:
 		// https://en.wikipedia.org/wiki/Euler_angles#Rotation_matrix
-		glm::mat4 mat4() {
+		glm::mat4 GetMatrix() const
+		{
 			const float c3 = glm::cos(rotation.z);
 			const float s3 = glm::sin(rotation.z);
 			const float c2 = glm::cos(rotation.x);

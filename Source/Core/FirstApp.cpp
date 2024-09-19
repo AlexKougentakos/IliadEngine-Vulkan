@@ -28,16 +28,21 @@ namespace ili
 	void FirstApp::Run()
 	{
 		RenderSystem renderSystem(m_Device, m_Renderer.GetSwapChainRenderPass());
+		Camera camera{};
 
 		while (!m_Window.ShouldClose())
 		{
 			glfwPollEvents();
 
+			//Placed inside the loop so that it is kept up to date when the window is resized
+			const float aspectRation = m_Renderer.GetAspectRatio();
+			//camera.SetOrthographicProjection(-aspectRation, aspectRation, -1, 1, -1, 1);
+			camera.SetPerspectiveProjection(glm::radians(50.f), aspectRation, 0.1f, 10.f);
 
 			if (const auto commandBuffer = m_Renderer.BeginFrame())
 			{
 				m_Renderer.BeginSwapChainRenderPass(commandBuffer);
-				renderSystem.RenderGameObjects(commandBuffer, m_GameObjects);
+				renderSystem.RenderGameObjects(commandBuffer, m_GameObjects, camera);
 				m_Renderer.EndSwapChainRenderPass(commandBuffer);
 				m_Renderer.EndFrame();
 			}
@@ -110,7 +115,7 @@ namespace ili
 
 		auto cube = GameObject::Create();
 		cube.SetModel(cubeModel);
-		cube.GetTransform().position = { 0.f, 0.f, 0.5f };
+		cube.GetTransform().position = { 0.f, 0.f, 2.5f };
 		cube.GetTransform().rotation = { 0.f, 0.f, 0.f };
 		cube.GetTransform().scale = { .5f, .5f, .5f };
 

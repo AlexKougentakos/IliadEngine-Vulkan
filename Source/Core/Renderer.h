@@ -24,6 +24,7 @@ namespace ili
 		void BeginSwapChainRenderPass(VkCommandBuffer commandBuffer);
 		void EndSwapChainRenderPass(VkCommandBuffer commandBuffer);
 		VkRenderPass GetSwapChainRenderPass() const { return m_pSwapChain->GetRenderPass(); }
+		float GetAspectRatio() const { return m_pSwapChain->ExtentAspectRatio(); }
 
 		bool IsFrameInProgress() const { return m_FrameStarted; }
 

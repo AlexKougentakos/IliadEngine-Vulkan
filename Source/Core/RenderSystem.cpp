@@ -6,9 +6,10 @@
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
+#include "glm/gtc/constants.hpp"
 
 #include "../SceneGraph/GameObject.h"
-#include "glm/gtc/constants.hpp"
+#include "../SceneGraph/Camera.h"
 
 namespace ili
 {
@@ -64,7 +65,7 @@ namespace ili
 		m_Pipeline = std::make_unique<Pipeline>(m_Device, "Assets/CompiledShaders/shader.vert.spv", "Assets/CompiledShaders/shader.frag.spv", pipelineConfig);
 	}
 
-	void RenderSystem::RenderGameObjects(VkCommandBuffer commandBuffer, std::vector<GameObject>& gameObjects)
+	void RenderSystem::RenderGameObjects(VkCommandBuffer commandBuffer, std::vector<GameObject>& gameObjects, const Camera& camera)
 	{
 		int i = 0;
 		for (auto& object : gameObjects)
@@ -79,7 +80,7 @@ namespace ili
 		{
 			SimplePushConstantData pushData{};
 			pushData.color = gameObject.GetColor();
-			pushData.transform = gameObject.GetTransformConst().GetMatrix();
+			pushData.transform = camera.GetProjection() * gameObject.GetTransformConst().GetMatrix();
 
 			vkCmdPushConstants(commandBuffer, m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &pushData);
 
