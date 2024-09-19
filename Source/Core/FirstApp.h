@@ -25,17 +25,11 @@ namespace ili
 		static constexpr int HEIGHT = 600;
 
 	private:
-		void CreatePipelineLayout();
-		void CreatePipeline();
-
 		void LoadGameObjects();
-		void RenderGameObjects(VkCommandBuffer commandBuffer);
 
 		Window m_Window;
 		Device m_Device{ m_Window };
 		Renderer m_Renderer{ m_Window, m_Device };
-		std::unique_ptr<Pipeline> m_Pipeline;
-		VkPipelineLayout m_PipelineLayout{};
 
 		std::vector<GameObject> m_GameObjects{};
 	};

@@ -27,10 +27,16 @@ namespace ili
 
 		bool IsFrameInProgress() const { return m_FrameStarted; }
 
+		int GetFrameIndex() const 
+		{
+			assert(m_FrameStarted && "Cannot get command buffer when frame not in progress.");
+			return m_CurrentFrameIndex; 
+		}
+
 		VkCommandBuffer GetCurrentCommandBuffer() const 
 		{
 			assert(m_FrameStarted && "Cannot get command buffer when frame not in progress.");
-			return m_CommandBuffers[m_CurrentFrameIndex]; 
+			return m_CommandBuffers[m_CurrentFrameIndex];
 		}
 
 	private:
@@ -44,7 +50,8 @@ namespace ili
 		std::unique_ptr<SwapChain> m_pSwapChain{};
 		std::vector<VkCommandBuffer> m_CommandBuffers{};
 
-		uint32_t m_CurrentFrameIndex{ 0 };
+		uint32_t m_CurrentImageIndex{ 0 };
+		int m_CurrentFrameIndex{ 0 };
 		bool m_FrameStarted{ false };
 	};
 }

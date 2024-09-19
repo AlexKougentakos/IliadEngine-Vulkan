@@ -22,7 +22,7 @@ namespace ili
 	{
 		assert(!m_FrameStarted && "Cannot call BeginFrame while frame is in progress");
 
-		const auto result = m_pSwapChain->AcquireNextImage(&m_CurrentFrameIndex);
+		const auto result = m_pSwapChain->AcquireNextImage(&m_CurrentImageIndex);
 
 		//Used to recreate swap chain if window is resized
 		if (result == VK_ERROR_OUT_OF_DATE_KHR)
@@ -61,7 +61,7 @@ namespace ili
 			throw std::runtime_error("Failed to record command buffer");
 		}
 
-		const auto result = m_pSwapChain->SubmitCommandBuffers(&commandBuffer, &m_CurrentFrameIndex);
+		const auto result = m_pSwapChain->SubmitCommandBuffers(&commandBuffer, &m_CurrentImageIndex);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_Window.WasWindowResized())
 		{
@@ -69,12 +69,13 @@ namespace ili
 			RecreateSwapChain();
 		}
 
-		if (result != VK_SUCCESS)
+		else if (result != VK_SUCCESS)
 		{
 			throw std::runtime_error("Failed to submit command buffer");
 		}
 
 		m_FrameStarted = false;
+		m_CurrentFrameIndex = (m_CurrentFrameIndex + 1) % SwapChain::MAX_FRAMES_IN_FLIGHT;
 	}
 
 	void Renderer::BeginSwapChainRenderPass(VkCommandBuffer commandBuffer)
@@ -85,7 +86,7 @@ namespace ili
 		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		renderPassInfo.renderPass = m_pSwapChain->GetRenderPass();
-		renderPassInfo.framebuffer = m_pSwapChain->GetFrameBuffer(m_CurrentFrameIndex);
+		renderPassInfo.framebuffer = m_pSwapChain->GetFrameBuffer(m_CurrentImageIndex);
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = m_pSwapChain->GetSwapChainExtent();
 
@@ -123,7 +124,7 @@ namespace ili
 
 	void Renderer::CreateCommandBuffers()
 	{
-		m_CommandBuffers.resize(m_pSwapChain->ImageCount());
+		m_CommandBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 
 		VkCommandBufferAllocateInfo commandBufferAllocInfo{};
 		commandBufferAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -149,16 +150,17 @@ namespace ili
 
 		vkDeviceWaitIdle(m_Device.GetDevice());
 
-		if (m_pSwapChain == nullptr)
+		if (!m_pSwapChain) 
 		{
 			m_pSwapChain = std::make_unique<SwapChain>(m_Device, extent);
 		}
-		else
+		else 
 		{
-			m_pSwapChain = std::make_unique<SwapChain>(m_Device, extent, std::move(m_pSwapChain));
-			if (m_pSwapChain->ImageCount() != m_CommandBuffers.size())
+			std::shared_ptr<SwapChain> oldSwapChain = std::move(m_pSwapChain);
+			m_pSwapChain = std::make_unique<SwapChain>(m_Device, extent, oldSwapChain);
+			if (!oldSwapChain->CompareSwapFormats(*m_pSwapChain)) 
 			{
-				CreateCommandBuffers();
+				throw std::runtime_error("Swap chain image(or depth) format has changed!");
 			}
 		}
 	}

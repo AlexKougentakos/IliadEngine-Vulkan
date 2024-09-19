@@ -20,52 +20,28 @@ namespace ili
         SwapChain(const SwapChain&) = delete;
         void operator=(const SwapChain&) = delete;
 
-        VkFramebuffer GetFrameBuffer(int index)
-        {
-            return m_SwapChainFramebuffers[index];
-        }
+        VkFramebuffer GetFrameBuffer(int index) const { return m_SwapChainFramebuffers[index]; }
 
-        VkRenderPass GetRenderPass()
-        {
-            return m_RenderPass;
-        }
+        VkRenderPass GetRenderPass() const { return m_RenderPass; }
 
-        VkImageView GetImageView(int index)
-        {
-            return m_SwapChainImageViews[index];
-        }
+        VkImageView GetImageView(int index) const { return m_SwapChainImageViews[index]; }
 
-        size_t ImageCount()
-        {
-            return m_SwapChainImages.size();
-        }
+        size_t ImageCount() const { return m_SwapChainImages.size(); }
+        
+        uint32_t GetWidth() const { return m_SwapChainExtent.width; }
+        uint32_t GetHeight() const { return m_SwapChainExtent.height; }
 
-        VkFormat GetSwapChainImageFormat()
-        {
-            return m_SwapChainImageFormat;
-        }
+        VkFormat GetSwapChainImageFormat() const { return m_SwapChainImageFormat; }
+        VkExtent2D GetSwapChainExtent() const { return m_SwapChainExtent; }
 
-        VkExtent2D GetSwapChainExtent()
-        {
-            return m_SwapChainExtent;
-        }
 
-        uint32_t GetWidth()
-        {
-            return m_SwapChainExtent.width;
-        }
-
-        uint32_t GetHeight()
-        {
-            return m_SwapChainExtent.height;
-        }
-
-        float ExtentAspectRatio()
-        {
-            return static_cast<float>(m_SwapChainExtent.width) / static_cast<float>(m_SwapChainExtent.height);
-        }
+        float ExtentAspectRatio() const { return static_cast<float>(m_SwapChainExtent.width) / static_cast<float>(m_SwapChainExtent.height); }
 
         VkFormat FindDepthFormat();
+		bool CompareSwapFormats(const SwapChain& swapChain) const 
+        {
+			return swapChain.m_SwapChainDepthFormat == m_SwapChainDepthFormat && swapChain.m_SwapChainImageFormat == m_SwapChainImageFormat;
+		}
 
         VkResult AcquireNextImage(uint32_t* p_imageIndex);
         VkResult SubmitCommandBuffers(const VkCommandBuffer* p_buffers, uint32_t* p_imageIndex);
@@ -86,6 +62,8 @@ namespace ili
         VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 
         VkFormat m_SwapChainImageFormat{};
+        VkFormat m_SwapChainDepthFormat{};
+
         VkExtent2D m_SwapChainExtent{};
 
         std::vector<VkFramebuffer> m_SwapChainFramebuffers{};
