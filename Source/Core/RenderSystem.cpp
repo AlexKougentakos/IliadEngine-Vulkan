@@ -16,9 +16,7 @@ namespace ili
 	struct SimplePushConstantData
 	{
 		glm::mat4 transform{ 1.f }; //Identity matrix
-		alignas(16) glm::vec3 color{};
-		//Use alignas because a three component item needs to be equal to 4 times its scalar alignment size
-		//Aka multiples of 2 of the original size. In this case, 4 bytes for a float, so 4 * 4 = 16
+		glm::mat4 modelMatrix{ 1.f }; //Identity matrix
 	};
 
 	RenderSystem::RenderSystem(Device& device, VkRenderPass renderPass) : m_Device(device)
@@ -74,9 +72,11 @@ namespace ili
 
 		for (const auto& gameObject : gameObjects)
 		{
+			auto modelMatrix = gameObject.GetTransformConst().GetMatrix();
+
 			SimplePushConstantData pushData{};
-			pushData.color = gameObject.GetColor();
-			pushData.transform = projectionView * gameObject.GetTransformConst().GetMatrix();
+			pushData.transform = projectionView * modelMatrix;
+			pushData.modelMatrix = modelMatrix;
 
 			vkCmdPushConstants(commandBuffer, m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &pushData);
 

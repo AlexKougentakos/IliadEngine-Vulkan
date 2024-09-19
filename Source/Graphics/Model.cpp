@@ -3,7 +3,6 @@
 #include <stdexcept>
 
 #define GLM_ENABLE_EXPERIMENTAL
-#include <iostream>
 #include <glm/gtx/hash.hpp>
 
 #include <unordered_map>
@@ -40,16 +39,12 @@ namespace ili
 
 	std::vector<VkVertexInputAttributeDescription> Model::Vertex::GetAttributeDescriptions()
 	{
-		std::vector<VkVertexInputAttributeDescription> attributeDescriptions(2);
-		attributeDescriptions[0].binding = 0;
-		attributeDescriptions[0].location = 0; //This corresponds to the location specified in the vertex shader
-		attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescriptions[0].offset = offsetof(Vertex, position);
+		std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
 
-		attributeDescriptions[1].binding = 0;
-		attributeDescriptions[1].location = 1; //This corresponds to the location specified in the vertex shader
-		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT; //Vec3 so it has 3 components
-		attributeDescriptions[1].offset = offsetof(Vertex, color);
+		attributeDescriptions.push_back({ 0,0,VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex, position)});
+		attributeDescriptions.push_back({ 1,0,VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex, color) });
+		attributeDescriptions.push_back({ 2,0,VK_FORMAT_R32G32B32_SFLOAT,offsetof(Vertex, normal) });
+		attributeDescriptions.push_back({ 3,0,VK_FORMAT_R32G32_SFLOAT,offsetof(Vertex, texCoord) });
 
 		return attributeDescriptions;
 	}
@@ -91,20 +86,12 @@ namespace ili
 						attrib.vertices[3 * index.vertex_index + 2]
 					};
 
-					auto colorIndex = index.vertex_index * 3 + 2;
-					if (colorIndex < attrib.colors.size())
+					vertex.color =
 					{
-						vertex.color = 
-						{
-							attrib.colors[colorIndex - 2],
-							attrib.colors[colorIndex - 1],
-							attrib.colors[colorIndex - 0]
-						};
-					}
-					else
-					{
-						vertex.color = { 1.0f, 1.0f, 1.0f };
-					}
+						attrib.colors[3 * index.vertex_index + 0],
+						attrib.colors[3 * index.vertex_index + 1],
+						attrib.colors[3 * index.vertex_index + 2]
+					};
 				}
 
 				if (index.normal_index >= 0)
@@ -134,8 +121,6 @@ namespace ili
 				indices.emplace_back(uniqueVertices[vertex]);
 			}
 		}
-
-		std::cout << "Loaded model with " << vertices.size() << " vertices and " << indices.size() << " indices\n";
 	}
 
 	Model::Model(Device& device, const Builder& builder)

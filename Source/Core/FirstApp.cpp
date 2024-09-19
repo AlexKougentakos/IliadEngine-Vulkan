@@ -75,17 +75,16 @@ namespace ili
 
 		auto cube = GameObject::Create();
 		cube.SetModel(cubeModel);
-		cube.GetTransform().position = { 0.f, 0.f, 2.5f };
-		cube.GetTransform().rotation = { 0.f, 0.f, 0.f };
+		cube.GetTransform().position = { 0.f, 0.f, .5f };
+		cube.GetTransform().rotation = { 0.f, 180.f, 0.f };
 		cube.GetTransform().scale = { .5f, -.5f, .5f };
 
 		const std::shared_ptr<Model> vase = Model::CreateModelFromFile(m_Device, "Assets/Models/flat_vase.obj");
 		auto vaseObject = GameObject::Create();
 		vaseObject.SetModel(vase);
-		vaseObject.GetTransform().position = { 0.5f, 0.f, 0.f };
+		vaseObject.GetTransform().position = { 0.5f, 0.f, 0.5f };
 		vaseObject.GetTransform().rotation = { 0.f, 0.f, 0.f };
 		vaseObject.GetTransform().scale = { 1.f, 1.f, 1.f };
-
 
 		m_GameObjects.emplace_back(cube);
 		m_GameObjects.emplace_back(vaseObject);
