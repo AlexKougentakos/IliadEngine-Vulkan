@@ -34,16 +34,23 @@ namespace ili
 
 
 
-	Model::Model(Device& device, const std::vector<Vertex>& vertices)
+	Model::Model(Device& device, const Builder& builder)
 		: m_Device(device)
 	{
-		CreateVertexBuffers(vertices);
+		CreateVertexBuffers(builder.vertices);
+		CreateIndexBuffers(builder.indices);
 	}
 
 	Model::~Model()
 	{
 		vkDestroyBuffer(m_Device.GetDevice(), m_VertexBuffer, nullptr);
 		vkFreeMemory(m_Device.GetDevice(), m_VertexBufferMemory, nullptr);
+
+		if (m_HasIndexBuffer)
+		{
+			vkDestroyBuffer(m_Device.GetDevice(), m_IndexBuffer, nullptr);
+			vkFreeMemory(m_Device.GetDevice(), m_IndexBufferMemory, nullptr);
+		}
 	}
 
 	void Model::CreateVertexBuffers(const std::vector<Vertex>& vertices)
@@ -62,16 +69,46 @@ namespace ili
 		vkUnmapMemory(m_Device.GetDevice(), m_VertexBufferMemory);
 	}
 
+	void Model::CreateIndexBuffers(const std::vector<uint32_t>& indices)
+	{
+		m_IndexCount = static_cast<uint32_t>(indices.size());
+		m_HasIndexBuffer = m_IndexCount > 0;
+
+		if (!m_HasIndexBuffer) return;
+
+		//Create a buffer on the GPU and allocate memory for it
+		const VkDeviceSize bufferSize = sizeof(indices[0]) * m_IndexCount;
+		m_Device.CreateBuffer(bufferSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_IndexBuffer, m_IndexBufferMemory);
+		
+		void* data;
+		//Create a region on the CPU which is linked to the GPU buffer we created before
+		vkMapMemory(m_Device.GetDevice(), m_IndexBufferMemory, 0, bufferSize, 0, &data);
+		memcpy(data, indices.data(), static_cast<size_t>(bufferSize)); //Copy the indices from the CPU to the GPU
+		vkUnmapMemory(m_Device.GetDevice(), m_IndexBufferMemory); //Unmap the memory from the CPU
+	}
+
 	void Model::Bind(VkCommandBuffer commandBuffer) const
 	{
 		const VkBuffer buffers[] = { m_VertexBuffer };
 		constexpr VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
+
+		if (m_HasIndexBuffer)
+		{
+			vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
+		}
 	}
 
 	void Model::Draw(VkCommandBuffer commandBuffer) const
 	{
-		vkCmdDraw(commandBuffer, m_VertexCount, 1, 0, 0);
+		if (m_HasIndexBuffer)
+		{
+			vkCmdDrawIndexed(commandBuffer, m_IndexCount, 1, 0, 0, 0);
+		}
+		else
+		{
+			vkCmdDraw(commandBuffer, m_VertexCount, 1, 0, 0);
+		}
 	}
 
 	
