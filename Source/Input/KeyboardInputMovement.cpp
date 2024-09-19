@@ -3,8 +3,8 @@
 void ili::KeyboardMovementController::MoveInPlaneXZ(GLFWwindow* window, const float deltaTime, GameObject& gameObject)
 {
 	glm::vec3 rotation{};
-	if (glfwGetKey(window, keys.lookLeft) == GLFW_PRESS) rotation.y += 1;
-	if (glfwGetKey(window, keys.lookRight) == GLFW_PRESS) rotation.y -= 1;
+	if (glfwGetKey(window, keys.lookLeft) == GLFW_PRESS) rotation.y -= 1;
+	if (glfwGetKey(window, keys.lookRight) == GLFW_PRESS) rotation.y += 1;
 	if (glfwGetKey(window, keys.lookUp) == GLFW_PRESS) rotation.x += 1;
 	if (glfwGetKey(window, keys.lookDown) == GLFW_PRESS) rotation.x -= 1;
 

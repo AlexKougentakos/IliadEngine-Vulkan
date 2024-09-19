@@ -10,6 +10,11 @@ include(FetchContent)
 # Vulkan
 find_package(Vulkan REQUIRED)
 
+
+# ------------------------------------------------------------------------
+# Fetch Dependencies and Define Project
+# ------------------------------------------------------------------------
+
 # Fetch GLFW
 FetchContent_Declare(
     glfw
@@ -37,6 +42,14 @@ FetchContent_Declare(
     GIT_TAG        1.0.1
 )
 FetchContent_MakeAvailable(glm)
+
+# Fetch TinyObjLoader
+FetchContent_Declare(
+    tinyobjloader
+    GIT_REPOSITORY https://github.com/tinyobjloader/tinyobjloader.git
+    GIT_TAG        v2.0-rc1
+)
+FetchContent_MakeAvailable(tinyobjloader)
 
 # Define the source and asset directories
 set(SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Source")
@@ -72,10 +85,11 @@ target_include_directories(IliadEngine PRIVATE
     ${imgui_SOURCE_DIR}/backends
     ${glm_SOURCE_DIR}  # Include GLM headers
     ${SOURCE_DIR}      # Include Source directory headers
+    ${tinyobjloader_SOURCE_DIR} # Include TinyObjLoader headers
 )
 
 # Link Vulkan, GLFW, and GLM libraries
-target_link_libraries(IliadEngine Vulkan::Vulkan glfw)
+target_link_libraries(IliadEngine Vulkan::Vulkan glfw tinyobjloader)
 
 # ------------------------------------------------------------------------
 # Visual Studio Specific Configurations

@@ -1,5 +1,7 @@
 #include "Model.h"
 
+#include <stdexcept>
+
 
 namespace ili
 {
@@ -32,7 +34,81 @@ namespace ili
 		return attributeDescriptions;
 	}
 
+	//
+	//  BUILDER STRUCT
+	//	
 
+	void Model::Builder::LoadModel(const std::string& filepath)
+	{
+		tinyobj::attrib_t attrib{};
+		std::vector<tinyobj::shape_t> shapes{};
+		std::vector<tinyobj::material_t> materials{};
+
+		std::string warn{};
+		std::string err{};
+
+		if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filepath.c_str()))
+		{
+			throw std::runtime_error(warn + err);
+		}
+
+		vertices.clear();
+		indices.clear();
+
+		for (const auto& shape : shapes)
+		{
+			for (const auto& index : shape.mesh.indices)
+			{
+				Vertex vertex{};
+
+				if (index.vertex_index >= 0)
+				{
+					vertex.position = 
+					{
+						attrib.vertices[3 * index.vertex_index + 0],
+						attrib.vertices[3 * index.vertex_index + 1],
+						attrib.vertices[3 * index.vertex_index + 2]
+					};
+
+					auto colorIndex = index.vertex_index * 3 + 2;
+					if (colorIndex < attrib.colors.size())
+					{
+						vertex.color = 
+						{
+							attrib.colors[colorIndex - 2],
+							attrib.colors[colorIndex - 1],
+							attrib.colors[colorIndex - 0]
+						};
+					}
+					else
+					{
+						vertex.color = { 1.0f, 1.0f, 1.0f };
+					}
+				}
+
+				if (index.normal_index >= 0)
+				{
+					vertex.normal =
+					{
+						attrib.normals[3 * index.normal_index + 0],
+						attrib.normals[3 * index.normal_index + 1],
+						attrib.normals[3 * index.normal_index + 2]
+					};
+				}
+
+				if (index.texcoord_index >= 0)
+				{
+					vertex.texCoord =
+					{
+						attrib.texcoords[2 * index.texcoord_index + 0],
+						attrib.texcoords[2 * index.texcoord_index + 1]
+					};
+				}
+
+				vertices.emplace_back(vertex);
+			}
+		}
+	}
 
 	Model::Model(Device& device, const Builder& builder)
 		: m_Device(device)
@@ -107,6 +183,13 @@ namespace ili
 
 		vkDestroyBuffer(m_Device.GetDevice(), stagingBuffer, nullptr);
 		vkFreeMemory(m_Device.GetDevice(), stagingBufferMemory, nullptr);
+	}
+
+	std::unique_ptr<Model> Model::CreateModelFromFile(Device& device, const std::string& filepath)
+	{
+		Builder builder{};
+		builder.LoadModel(filepath);
+		return std::make_unique<Model>(device, builder);
 	}
 
 	void Model::Bind(VkCommandBuffer commandBuffer) const

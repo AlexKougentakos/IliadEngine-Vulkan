@@ -6,6 +6,8 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 
+#include <tiny_obj_loader.h>
+
 namespace ili
 {
 	class Model
@@ -15,6 +17,8 @@ namespace ili
 		{
 			glm::vec3 position;
 			glm::vec3 color;
+			glm::vec3 normal;
+			glm::vec2 texCoord;
 			
 			static std::vector<VkVertexInputBindingDescription> GetBindingDescriptions();
 			static std::vector<VkVertexInputAttributeDescription> GetAttributeDescriptions();
@@ -24,6 +28,8 @@ namespace ili
 		{
 			std::vector<Vertex> vertices{};
 			std::vector<uint32_t> indices{};
+
+			void LoadModel(const std::string& filepath);
 		};
 
 		Model(Device& device, const Builder& builder);
@@ -33,6 +39,8 @@ namespace ili
 		Model(Model&& other) noexcept = delete;
 		Model& operator=(const Model& other) = delete;
 		Model& operator=(Model&& other) noexcept = delete;
+
+		static std::unique_ptr<Model> CreateModelFromFile(Device& device, const std::string& filepath);
 
 		void Bind(VkCommandBuffer commandBuffer) const;
 		void Draw(VkCommandBuffer commandBuffer) const;
