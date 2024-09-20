@@ -7,10 +7,12 @@
 
 namespace ili
 {
+	struct FrameInfo;
+
 	class RenderSystem
 	{
 	public:
-		RenderSystem(Device& device, VkRenderPass renderPass);
+		RenderSystem(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
 		~RenderSystem();
 
 		RenderSystem(const RenderSystem&) = delete;
@@ -18,9 +20,9 @@ namespace ili
 		RenderSystem(RenderSystem&&) = delete;
 		RenderSystem& operator=(RenderSystem&&) = delete;
 
-		void RenderGameObjects(VkCommandBuffer commandBuffer, std::vector<GameObject>& gameObjects, const Camera& camera);
+		void RenderGameObjects(FrameInfo, const std::vector<GameObject>& gameObjects);
 	private:
-		void CreatePipelineLayout();
+		void CreatePipelineLayout(VkDescriptorSetLayout globalSetLayout);
 		void CreatePipeline(VkRenderPass renderPass);
 
 		Device& m_Device;

@@ -10,18 +10,19 @@
 
 #include "../SceneGraph/GameObject.h"
 #include "../SceneGraph/Camera.h"
+#include "Structs/FrameInfo.h"
 
 namespace ili
 {
 	struct SimplePushConstantData
 	{
-		glm::mat4 transform{ 1.f }; //Identity matrix
+		glm::mat4 modelMatrix{ 1.f }; //Identity matrix
 		glm::mat4 normalMatrix{ 1.f }; //Identity matrix
 	};
 
-	RenderSystem::RenderSystem(Device& device, VkRenderPass renderPass) : m_Device(device)
+	RenderSystem::RenderSystem(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout) : m_Device(device)
 	{
-		CreatePipelineLayout();
+		CreatePipelineLayout(globalSetLayout);
 		CreatePipeline(renderPass);
 	}
 
@@ -30,19 +31,19 @@ namespace ili
 		vkDestroyPipelineLayout(m_Device.GetDevice(), m_PipelineLayout, nullptr);
 	}
 
-	void RenderSystem::CreatePipelineLayout()
+	void RenderSystem::CreatePipelineLayout(VkDescriptorSetLayout globalSetLayout)
 	{
 		VkPushConstantRange pushConstantRange{};
 		pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 		pushConstantRange.offset = 0;
 		pushConstantRange.size = sizeof(SimplePushConstantData);
 
-
+		const std::vector<VkDescriptorSetLayout> descriptorSetLayouts = { globalSetLayout };
 
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = 0;
-		pipelineLayoutInfo.pSetLayouts = nullptr;
+		pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
+		pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
 		pipelineLayoutInfo.pushConstantRangeCount = 1;
 		pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 
@@ -63,25 +64,24 @@ namespace ili
 		m_Pipeline = std::make_unique<Pipeline>(m_Device, "Assets/CompiledShaders/shader.vert.spv", "Assets/CompiledShaders/shader.frag.spv", pipelineConfig);
 	}
 
-	void RenderSystem::RenderGameObjects(VkCommandBuffer commandBuffer, std::vector<GameObject>& gameObjects, const Camera& camera)
+	void RenderSystem::RenderGameObjects(FrameInfo frameInfo, const std::vector<GameObject>& gameObjects)
 	{
-		m_Pipeline->Bind(commandBuffer);
+		m_Pipeline->Bind(frameInfo.commandBuffer);
 
-		//Every rendered object will use the same projection and view matrix, so we don't need to do the calculation for each object
-		const auto projectionView = camera.GetProjection() * camera.GetView();
+		vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, 
+			&frameInfo.globalDescriptorSet, 0, nullptr);
 
 		for (const auto& gameObject : gameObjects)
 		{
-			auto modelMatrix = gameObject.GetTransformConst().GetMatrix();
-
 			SimplePushConstantData pushData{};
-			pushData.transform = projectionView * modelMatrix;
+
+			pushData.modelMatrix = gameObject.GetTransformConst().GetMatrix();
 			pushData.normalMatrix = gameObject.GetTransformConst().GetNormalMatrix();
 
-			vkCmdPushConstants(commandBuffer, m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &pushData);
+			vkCmdPushConstants(frameInfo.commandBuffer, m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &pushData);
 
-			gameObject.GetModel()->Bind(commandBuffer);
-			gameObject.GetModel()->Draw(commandBuffer);
+			gameObject.GetModel()->Bind(frameInfo.commandBuffer);
+			gameObject.GetModel()->Draw(frameInfo.commandBuffer);
 		}
 	}
 }

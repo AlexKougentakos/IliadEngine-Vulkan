@@ -4,6 +4,7 @@
 #include "../Graphics/Pipeline.h"
 #include "../Graphics/Device.h"
 #include "Renderer.h"
+#include "Graphics/Descriptors.h"
 #include "SceneGraph/GameObject.h"
 
 namespace ili
@@ -31,6 +32,7 @@ namespace ili
 		Device m_Device{ m_Window };
 		Renderer m_Renderer{ m_Window, m_Device };
 
+		std::unique_ptr<DescriptorPool> m_GlobalDescriptorPool{};
 		std::vector<GameObject> m_GameObjects{};
 	};
 }
