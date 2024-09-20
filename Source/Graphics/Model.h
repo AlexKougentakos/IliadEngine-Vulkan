@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Device.h"
+#include "Buffer.h"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -56,12 +57,12 @@ namespace ili
 
 		Device& m_Device;
 
-		VkBuffer m_VertexBuffer{};
+		std::unique_ptr<Buffer> m_pVertexBuffer{};
 		VkDeviceMemory m_VertexBufferMemory{};
 		uint32_t m_VertexCount{};
 
 		bool m_HasIndexBuffer{false};
-		VkBuffer m_IndexBuffer{};
+		std::unique_ptr<Buffer> m_pIndexBuffer{};
 		VkDeviceMemory m_IndexBufferMemory{};
 		uint32_t m_IndexCount{};
 

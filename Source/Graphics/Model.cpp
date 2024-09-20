@@ -132,14 +132,7 @@ namespace ili
 
 	Model::~Model()
 	{
-		vkDestroyBuffer(m_Device.GetDevice(), m_VertexBuffer, nullptr);
-		vkFreeMemory(m_Device.GetDevice(), m_VertexBufferMemory, nullptr);
-
-		if (m_HasIndexBuffer)
-		{
-			vkDestroyBuffer(m_Device.GetDevice(), m_IndexBuffer, nullptr);
-			vkFreeMemory(m_Device.GetDevice(), m_IndexBufferMemory, nullptr);
-		}
+		
 	}
 
 	void Model::CreateVertexBuffers(const std::vector<Vertex>& vertices)
@@ -150,23 +143,17 @@ namespace ili
 
 		// This just calculates how much memory we need to allocate for all the vertices of the model
 		const VkDeviceSize bufferSize = sizeof(vertices[0]) * m_VertexCount;
+		constexpr uint32_t vertexSize = sizeof(vertices[0]);
 
-		VkBuffer stagingBuffer{};
-		VkDeviceMemory stagingBufferMemory{};
-		m_Device.CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
-		void* data;
-		vkMapMemory(m_Device.GetDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);
-		memcpy(data, vertices.data(), static_cast<size_t>(bufferSize));
-		vkUnmapMemory(m_Device.GetDevice(), stagingBufferMemory);
+		Buffer stagingBuffer{ m_Device, vertexSize, m_VertexCount, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT };
 
-		m_Device.CreateBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_VertexBuffer, m_VertexBufferMemory);
+		stagingBuffer.Map();
+		stagingBuffer.WriteToBuffer((void*)(vertices.data()));
 
-		m_Device.CopyBuffer(stagingBuffer, m_VertexBuffer, bufferSize);
+		m_pVertexBuffer = std::make_unique<Buffer>(m_Device, vertexSize, m_VertexCount, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-		vkDestroyBuffer(m_Device.GetDevice(), stagingBuffer, nullptr);
-		vkFreeMemory(m_Device.GetDevice(), stagingBufferMemory, nullptr);
+		m_Device.CopyBuffer(stagingBuffer.GetBuffer(), m_pVertexBuffer->GetBuffer(), bufferSize);
 	}
 
 	void Model::CreateIndexBuffers(const std::vector<uint32_t>& indices)
@@ -178,24 +165,16 @@ namespace ili
 
 		//Create a buffer on the GPU and allocate memory for it
 		const VkDeviceSize bufferSize = sizeof(indices[0]) * m_IndexCount;
+		constexpr uint32_t indexSize = sizeof(indices[0]);
 
-		VkBuffer stagingBuffer{};
-		VkDeviceMemory stagingBufferMemory{};
-		m_Device.CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+		Buffer stagingBuffer{ m_Device, indexSize, m_IndexCount, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT };
 
-		void* data;
-		//Create a region on the CPU which is linked to the GPU buffer we created before
-		vkMapMemory(m_Device.GetDevice(), stagingBufferMemory, 0, bufferSize, 0, &data); //Copy the indices from the CPU to the GPU
-		memcpy(data, indices.data(), static_cast<size_t>(bufferSize));
-		vkUnmapMemory(m_Device.GetDevice(), stagingBufferMemory); //Unmap the memory from the CPU
+		stagingBuffer.Map();
+		stagingBuffer.WriteToBuffer((void*)(indices.data()));
 
-		m_Device.CreateBuffer(bufferSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_IndexBuffer, m_IndexBufferMemory);
+		m_pIndexBuffer = std::make_unique<Buffer>(m_Device, indexSize, m_IndexCount, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-		m_Device.CopyBuffer(stagingBuffer, m_IndexBuffer, bufferSize);
-
-		vkDestroyBuffer(m_Device.GetDevice(), stagingBuffer, nullptr);
-		vkFreeMemory(m_Device.GetDevice(), stagingBufferMemory, nullptr);
+		m_Device.CopyBuffer(stagingBuffer.GetBuffer(), m_pIndexBuffer->GetBuffer(), bufferSize);
 	}
 
 	std::unique_ptr<Model> Model::CreateModelFromFile(Device& device, const std::string& filepath)
@@ -207,13 +186,13 @@ namespace ili
 
 	void Model::Bind(VkCommandBuffer commandBuffer) const
 	{
-		const VkBuffer buffers[] = { m_VertexBuffer };
+		const VkBuffer buffers[] = { m_pVertexBuffer->GetBuffer()};
 		constexpr VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
 
 		if (m_HasIndexBuffer)
 		{
-			vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
+			vkCmdBindIndexBuffer(commandBuffer, m_pIndexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
 		}
 	}
 
