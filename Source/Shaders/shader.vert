@@ -6,6 +6,8 @@ layout(location = 2) in vec3 normal;
 layout(location = 3) in vec2 texCoord;
 
 layout(location = 0) out vec3 outColor;
+layout(location = 1) out vec3 fragPositionWorld;
+layout(location = 2) out vec3 fragNormalWorld;
 
 layout(set = 0, binding = 0) uniform GlobalUbo
 {
@@ -36,17 +38,7 @@ void main()
 	//mat3 normalMatrix = transpose(inverse(mat3(push.modelMatrix)));
 	//vec3 normalWorldSpace = normalize(normalMatrix * normal);
 
-	vec3 normalWorldSpace = normalize(mat3(push.normalMatrix) * normal);
-
-	vec3 lightDirection = globalUbo.lightPosition.xyz - position.xyz;
-
-	//Do this BEFORE normalizing the light direction
-	float attenuation = 1.0 / dot(lightDirection, lightDirection); // Getting the dot product of a vector with itself is a quick/efficient way to get the length squared
-
-
-	vec3 lightColor = globalUbo.lightColor.xyz * globalUbo.lightColor.w * attenuation;
-	vec3 ambientLight = globalUbo.ambientColor.xyz * globalUbo.ambientColor.w;
-	vec3 diffuseLight = lightColor * max(dot(normalWorldSpace, normalize(lightDirection)), 0);
-
-	outColor = (diffuseLight + ambientLight) * lightColor;
+	fragNormalWorld  = normalize(mat3(push.normalMatrix) * normal);
+	fragPositionWorld = position.xyz;
+	outColor = color;
 }
