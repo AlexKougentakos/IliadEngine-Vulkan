@@ -8,6 +8,7 @@
 #include <chrono>
 #include <glm/glm.hpp>
 
+#include "PointLightSystem.h"
 #include "RenderSystem.h"
 #include "../SceneGraph/GameObject.h"
 #include "glm/gtc/constants.hpp"
@@ -18,7 +19,8 @@ namespace ili
 {
 	struct GlobalUbo
 	{
-		glm::mat4 projectionViewMatrix{1.f};
+		glm::mat4 projectionMatrix{1.f};
+		glm::mat4 viewMatrix{1.f};
 		
 		glm::vec4 ambientColor{ 1.f, 1.f, 1.f, 0.02f }; //Alpha channel is intensity
 		glm::vec4 lightPosition{ -1.f }; //Ignore the w component, it's just there for padding
@@ -65,6 +67,7 @@ namespace ili
 		}
 
 		RenderSystem renderSystem(m_Device, m_Renderer.GetSwapChainRenderPass(), globalSetLayout->GetDescriptorSetLayout());
+		PointLightSystem pointLightSystem(m_Device, m_Renderer.GetSwapChainRenderPass(), globalSetLayout->GetDescriptorSetLayout());
 		Camera camera{};
 		
 		camera.SetViewTarget({ 0.f, 0.f, 0.f }, { 0.5f, 0.f, 1.f });
@@ -99,12 +102,14 @@ namespace ili
 				const FrameInfo frameInfo{ frameIndex, frameTime, commandBuffer, camera, globalDescriptorSets[frameIndex]};
 
 				GlobalUbo globalUbo{};
-				globalUbo.projectionViewMatrix = camera.GetProjection() * camera.GetView();
+				globalUbo.projectionMatrix = camera.GetProjection();
+				globalUbo.viewMatrix = camera.GetView();
 				uboBuffers[frameIndex]->WriteToBuffer(&globalUbo);
 				uboBuffers[frameIndex]->Flush();
 
 				m_Renderer.BeginSwapChainRenderPass(commandBuffer);
 				renderSystem.RenderGameObjects(frameInfo, m_GameObjects);
+				pointLightSystem.Render(frameInfo);
 				m_Renderer.EndSwapChainRenderPass(commandBuffer);
 				m_Renderer.EndFrame();
 			}

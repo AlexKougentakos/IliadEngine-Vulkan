@@ -9,18 +9,18 @@ namespace ili
 {
 	struct FrameInfo;
 
-	class RenderSystem
+	class PointLightSystem
 	{
 	public:
-		RenderSystem(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
-		~RenderSystem();
+		PointLightSystem(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
+		~PointLightSystem();
 
-		RenderSystem(const RenderSystem&) = delete;
-		RenderSystem& operator=(const RenderSystem&) = delete;
-		RenderSystem(RenderSystem&&) = delete;
-		RenderSystem& operator=(RenderSystem&&) = delete;
+		PointLightSystem(const PointLightSystem&) = delete;
+		PointLightSystem& operator=(const PointLightSystem&) = delete;
+		PointLightSystem(PointLightSystem&&) = delete;
+		PointLightSystem& operator=(PointLightSystem&&) = delete;
 
-		void RenderGameObjects(const FrameInfo& frameInfo, const std::vector<GameObject>& gameObjects);
+		void Render(const FrameInfo& frameInfo);
 	private:
 		void CreatePipelineLayout(VkDescriptorSetLayout globalSetLayout);
 		void CreatePipeline(VkRenderPass renderPass);

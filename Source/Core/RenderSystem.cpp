@@ -64,7 +64,7 @@ namespace ili
 		m_Pipeline = std::make_unique<Pipeline>(m_Device, "Assets/CompiledShaders/shader.vert.spv", "Assets/CompiledShaders/shader.frag.spv", pipelineConfig);
 	}
 
-	void RenderSystem::RenderGameObjects(FrameInfo frameInfo, const std::vector<GameObject>& gameObjects)
+	void RenderSystem::RenderGameObjects(const FrameInfo& frameInfo, const std::vector<GameObject>& gameObjects)
 	{
 		m_Pipeline->Bind(frameInfo.commandBuffer);
 

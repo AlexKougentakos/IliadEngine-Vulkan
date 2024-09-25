@@ -11,7 +11,8 @@ layout(location = 2) out vec3 fragNormalWorld;
 
 layout(set = 0, binding = 0) uniform GlobalUbo
 {
-	mat4 projectionViewMatrix;
+	mat4 projectionMatrix;
+	mat4 viewMatrix;
 	
 	vec4 ambientColor; //Alpha channel is intensity
 	vec4 lightPosition; //Ignore the w component, it's just there for padding
@@ -29,7 +30,7 @@ const float AMBIENT = 0.02;
 void main() 
 {
 	vec4 position = push.modelMatrix * vec4(position, 1.0);
-	gl_Position = globalUbo.projectionViewMatrix * position;
+	gl_Position = globalUbo.projectionMatrix * globalUbo.viewMatrix * position;
 
 	//Only works correctly if the model matrix is uniformally scaled (aka {1,1,1} or {2,2,2} but not {1,2,3})
 	//vec3 normalWorldSpace = normalize(mat3(push.modelMatrix) * normal);

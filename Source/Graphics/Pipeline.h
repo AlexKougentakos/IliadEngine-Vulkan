@@ -8,6 +8,9 @@ namespace ili
 
 	struct PipelineConfigInfo
 	{
+		std::vector<VkVertexInputBindingDescription> vertexBindingDescriptions{};
+		std::vector<VkVertexInputAttributeDescription> vertexAttributeDescriptions{};
+
 		VkPipelineViewportStateCreateInfo viewportInfo{};
 		VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};
 		VkPipelineRasterizationStateCreateInfo rasterizationInfo{};

@@ -73,8 +73,8 @@ namespace ili
         shaderStages[1].pNext = nullptr;
         shaderStages[1].pSpecializationInfo = nullptr;
 
-		const auto bindingDescriptions = Model::Vertex::GetBindingDescriptions();
-		const auto attributeDescriptions = Model::Vertex::GetAttributeDescriptions();
+		const auto& bindingDescriptions = configInfo.vertexBindingDescriptions;
+		const auto& attributeDescriptions = configInfo.vertexAttributeDescriptions;
 
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -194,10 +194,14 @@ namespace ili
 		configInfoInOut.dynamicStateInfo.pDynamicStates = configInfoInOut.dynamicStateEnables.data();
 		configInfoInOut.dynamicStateInfo.dynamicStateCount = static_cast<uint32_t>(configInfoInOut.dynamicStateEnables.size());
 		configInfoInOut.dynamicStateInfo.flags = 0;
+
+		configInfoInOut.vertexBindingDescriptions = Model::Vertex::GetBindingDescriptions();
+		configInfoInOut.vertexAttributeDescriptions = Model::Vertex::GetAttributeDescriptions();
     }
 
     void Pipeline::Bind(VkCommandBuffer commandBuffer)
     {
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
     }
+
 }
