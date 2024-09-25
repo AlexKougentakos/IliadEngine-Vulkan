@@ -25,7 +25,8 @@ namespace ili
 	FirstApp::FirstApp() : m_Window(WIDTH, HEIGHT, "Iliad Engine - Vulkan")
 	{
 		m_GlobalDescriptorPool = DescriptorPool::Builder(m_Device)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)
+			.setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT)
 			.build();
 
 		LoadGameObjects();
@@ -94,7 +95,7 @@ namespace ili
 
 				GlobalUbo globalUbo{};
 				globalUbo.projectionViewMatrix = camera.GetProjection() * camera.GetView();
-				uboBuffers[frameIndex]->WriteToIndex(&globalUbo, frameIndex);
+				uboBuffers[frameIndex]->WriteToBuffer(&globalUbo);
 				uboBuffers[frameIndex]->Flush();
 
 				m_Renderer.BeginSwapChainRenderPass(commandBuffer);
