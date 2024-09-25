@@ -19,7 +19,11 @@ namespace ili
 	struct GlobalUbo
 	{
 		glm::mat4 projectionViewMatrix{1.f};
-		glm::vec3 lightDirection = glm::normalize(glm::vec3{1.f, -3.f, -1.f});
+		
+		glm::vec4 ambientColor{ 1.f, 1.f, 1.f, 0.02f }; //Alpha channel is intensity
+		glm::vec4 lightPosition{ -1.f }; //Ignore the w component, it's just there for padding
+		glm::vec4 lightColor{ 1.f }; //Alpha channel is intensity
+
 	};
 
 	FirstApp::FirstApp() : m_Window(WIDTH, HEIGHT, "Iliad Engine - Vulkan")
@@ -66,6 +70,7 @@ namespace ili
 		camera.SetViewTarget({ 0.f, 0.f, 0.f }, { 0.5f, 0.f, 1.f });
 
 		auto viewerObject = GameObject::Create();
+		viewerObject.GetTransform().position = { 0.f, 0.f, -1.f };
 		KeyboardMovementController cameraController{};
 
 
@@ -114,18 +119,26 @@ namespace ili
 
 		auto cube = GameObject::Create();
 		cube.SetModel(cubeModel);
-		cube.GetTransform().position = { 0.f, 0.f, .5f };
+		cube.GetTransform().position = { 0.f, 0.f, 0.f };
 		cube.GetTransform().rotation = { 0.f, 180.f, 0.f };
 		cube.GetTransform().scale = { .5f, -.5f, .5f };
 
 		const std::shared_ptr<Model> vase = Model::CreateModelFromFile(m_Device, "Assets/Models/flat_vase.obj");
 		auto vaseObject = GameObject::Create();
 		vaseObject.SetModel(vase);
-		vaseObject.GetTransform().position = { 0.5f, 0.f, 0.5f };
+		vaseObject.GetTransform().position = { 0.5f, 0.f, 0.0f };
 		vaseObject.GetTransform().rotation = { 0.f, 0.f, 0.f };
 		vaseObject.GetTransform().scale = { 1.f, .5f, 1.f };
 
+		const std::shared_ptr<Model> floor = Model::CreateModelFromFile(m_Device, "Assets/Models/quad.obj");
+		auto floorObject = GameObject::Create();
+		floorObject.SetModel(floor);
+		floorObject.GetTransform().position = { 0.5f, 0.f, 0.0f };
+		floorObject.GetTransform().rotation = { 0.f, 0.f, 0.f };
+		floorObject.GetTransform().scale = { 3.f, .5f, 3.f };
+
 		m_GameObjects.emplace_back(cube);
 		m_GameObjects.emplace_back(vaseObject);
+		m_GameObjects.emplace_back(floorObject);
 	}
 }
