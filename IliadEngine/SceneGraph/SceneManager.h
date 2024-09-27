@@ -26,6 +26,8 @@ namespace ili {
 
         void RemoveScene(const std::string& sceneName);
 
+        void Update(const float deltaTime);
+
     private:
         std::unordered_map<std::string, std::unique_ptr<Scene>> m_Scenes;
 		Scene* m_pCurrentScene{ nullptr };

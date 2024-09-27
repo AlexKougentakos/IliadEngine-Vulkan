@@ -10,7 +10,7 @@ namespace ili
 	class Renderer
 	{
 	public:
-		Renderer(Window& window, Device& device);
+		Renderer(Window* window, Device& device);
 		~Renderer();
 
 		Renderer(const Renderer&) = delete;
@@ -46,7 +46,7 @@ namespace ili
 
 		void RecreateSwapChain();
 
-		Window& m_Window;
+		Window* m_Window;
 		Device& m_Device;
 		std::unique_ptr<SwapChain> m_pSwapChain{};
 		std::vector<VkCommandBuffer> m_CommandBuffers{};

@@ -28,4 +28,12 @@ namespace ili
     {
         m_Scenes.erase(sceneName);
     }
+
+    void SceneManager::Update(const float deltaTime)
+    {
+		if (m_pCurrentScene)
+		{
+			m_pCurrentScene->Update(deltaTime);
+		}
+    }
 }

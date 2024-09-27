@@ -5,7 +5,8 @@
 namespace ili
 {
 
-    class Buffer {
+    class Buffer 
+    {
     public:
         Buffer(
             Device& device,

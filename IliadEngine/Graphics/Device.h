@@ -35,7 +35,7 @@ namespace ili
         const bool m_EnableValidationLayers = true;
 #endif
 
-        Device(Window& window);
+        Device(Window* window);
         ~Device();
 
         // Not copyable or movable

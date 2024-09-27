@@ -14,10 +14,10 @@ namespace ili
 		Window(const int width, const int height, const std::string& name);
 		~Window();
 
-		Window(const Window&) = delete;
-		Window& operator=(const Window&) = delete;
-		Window(Window&&) = delete;
-		Window& operator=(Window&&) = delete;
+		Window(const Window&) = default;
+		Window& operator=(const Window&) = default;
+		Window& operator=(Window&&) = default;
+		Window(Window&&) = default;
 
 		GLFWwindow* GetWindow() const { return m_pWindow; }
 

@@ -19,6 +19,7 @@ namespace ili
         std::vector<std::unique_ptr<GameObject>>& GetGameObjects();
 
         void Update(float deltaTime);
+
     private:
         friend class SceneManager; //Factory pattern
         Scene() = default;

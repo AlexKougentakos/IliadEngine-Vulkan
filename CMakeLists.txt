@@ -10,11 +10,6 @@ include(FetchContent)
 # Vulkan
 find_package(Vulkan REQUIRED)
 
-
-# ------------------------------------------------------------------------
-# Fetch Dependencies and Define Project
-# ------------------------------------------------------------------------
-
 # Fetch GLFW
 FetchContent_Declare(
     glfw
@@ -43,7 +38,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glm)
 
-# Fetch TinyObjLoader
+# Fetch tinyobjloader
 FetchContent_Declare(
     tinyobjloader
     GIT_REPOSITORY https://github.com/tinyobjloader/tinyobjloader.git
@@ -52,17 +47,19 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(tinyobjloader)
 
 # Define the source and asset directories
-set(SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Source")
+set(SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/IliadEngine")
 set(ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Assets")
 set(SHADER_DIR "${ASSETS_DIR}/Shaders")
+set(PROJECT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/IliadProject")
 
-# Collect all project source files from Source directory
-file(GLOB_RECURSE PROJECT_SOURCES
+# Collect all source files from IliadEngine directory
+file(GLOB_RECURSE LIB_SOURCES
     "${SOURCE_DIR}/*.cpp"
     "${SOURCE_DIR}/*.h"
-    "${SHADER_DIR}/*.frag"
-    "${SHADER_DIR}/*.vert"
 )
+
+# Collect shader files
+file(GLOB_RECURSE SHADER_FILES "${SHADER_DIR}/*.frag" "${SHADER_DIR}/*.vert")
 
 # Define ImGui source files
 set(IMGUI_FILES
@@ -75,32 +72,88 @@ set(IMGUI_FILES
     ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
 )
 
-# Add executable with project sources and ImGui files
-add_executable(IliadEngine ${PROJECT_SOURCES} ${IMGUI_FILES})
-
-# Include directories for GLFW, ImGui, its backends, glm, and your Source directory
-target_include_directories(IliadEngine PRIVATE 
-    ${glfw_SOURCE_DIR}/include
+# Add ImGui library
+add_library(ImGui STATIC ${IMGUI_FILES})
+target_include_directories(ImGui PUBLIC
     ${imgui_SOURCE_DIR}
     ${imgui_SOURCE_DIR}/backends
+)
+target_link_libraries(ImGui PUBLIC glfw Vulkan::Vulkan)
+
+# Add static library IliadEngine with library sources
+add_library(IliadEngine STATIC ${LIB_SOURCES})
+
+# Include directories for IliadEngine
+target_include_directories(IliadEngine PUBLIC
+    ${Vulkan_INCLUDE_DIRS}
+    ${glfw_SOURCE_DIR}/include
     ${glm_SOURCE_DIR}  # Include GLM headers
-    ${SOURCE_DIR}      # Include Source directory headers
-    ${tinyobjloader_SOURCE_DIR} # Include TinyObjLoader headers
+    ${imgui_SOURCE_DIR}
+    ${imgui_SOURCE_DIR}/backends
+    ${tinyobjloader_SOURCE_DIR}  # Include tinyobjloader headers
+    ${SOURCE_DIR}      # Include IliadEngine directory headers
 )
 
-# Link Vulkan, GLFW, and GLM libraries
-target_link_libraries(IliadEngine Vulkan::Vulkan glfw tinyobjloader)
+# Link Vulkan, GLFW, ImGui, and tinyobjloader libraries to IliadEngine
+target_link_libraries(IliadEngine PUBLIC Vulkan::Vulkan glfw ImGui tinyobjloader)
+
+# Additional CMake configurations for Vulkan (optional if needed)
+if(WIN32)
+    target_compile_definitions(IliadEngine PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+endif()
+
+# Create the executable project IliadProject with sources from IliadProject directory
+file(GLOB_RECURSE PROJECT_SOURCES
+    "${PROJECT_DIR}/*.cpp"
+    "${PROJECT_DIR}/*.h"
+)
+
+add_executable(IliadProject ${PROJECT_SOURCES})
+
+# Include directories for IliadProject
+target_include_directories(IliadProject PUBLIC
+    ${Vulkan_INCLUDE_DIRS}
+    ${glfw_SOURCE_DIR}/include
+    ${glm_SOURCE_DIR}  # Include GLM headers
+    ${imgui_SOURCE_DIR}
+    ${imgui_SOURCE_DIR}/backends
+    ${PROJECT_DIR}     # Include IliadProject directory headers
+    ${SOURCE_DIR}      # Include IliadEngine headers
+)
+
+# Link IliadProject to IliadEngine, Vulkan, GLFW, and ImGui
+target_link_libraries(IliadProject PRIVATE IliadEngine Vulkan::Vulkan glfw ImGui)
+
+if(WIN32)
+    target_compile_definitions(IliadProject PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+endif()
 
 # ------------------------------------------------------------------------
 # Visual Studio Specific Configurations
 # ------------------------------------------------------------------------
 if(MSVC)
-    # Create source groups for Visual Studio filters based on folder structure
-    foreach(source_file ${PROJECT_SOURCES})
+    # Create source groups for Visual Studio filters based on folder structure for IliadEngine
+    foreach(source_file ${LIB_SOURCES})
         get_filename_component(dir ${source_file} DIRECTORY)
         file(RELATIVE_PATH rel_dir ${SOURCE_DIR} ${dir})
-        # Replace '/' with '\' for Visual Studio compatibility
-        string(REPLACE "/" "\\" group_name ${rel_dir})
+        if(rel_dir STREQUAL "" OR rel_dir STREQUAL ".")
+            set(group_name "\\")
+        else()
+            # Replace '/' with '\' for Visual Studio compatibility
+            string(REPLACE "/" "\\" group_name ${rel_dir})
+        endif()
+        source_group("${group_name}" FILES "${source_file}")
+    endforeach()
+
+    # Create source groups for Visual Studio filters based on folder structure for IliadProject
+    foreach(source_file ${PROJECT_SOURCES})
+        get_filename_component(dir ${source_file} DIRECTORY)
+        file(RELATIVE_PATH rel_dir ${PROJECT_DIR} ${dir})
+        if(rel_dir STREQUAL "" OR rel_dir STREQUAL ".")
+            set(group_name "\\")
+        else()
+            string(REPLACE "/" "\\" group_name ${rel_dir})
+        endif()
         source_group("${group_name}" FILES "${source_file}")
     endforeach()
 
@@ -111,15 +164,12 @@ if(MSVC)
     # Custom Build Steps for Shader Compilation and Asset Copying
     # ------------------------------------------------------------------------
 
-    # Find all shader files (.frag and .vert)
-    file(GLOB_RECURSE SHADER_FILES "${SHADER_DIR}/*.frag" "${SHADER_DIR}/*.vert")
-
     # Add a pre-build step to compile shaders using CompileShaders.bat
-    add_custom_command(TARGET IliadEngine PRE_BUILD
+    add_custom_command(TARGET IliadProject PRE_BUILD
         COMMAND "${CMAKE_COMMAND}" -E echo "Compiling shaders..."
     )
-    
-    add_custom_command(TARGET IliadEngine PRE_BUILD
+
+    add_custom_command(TARGET IliadProject PRE_BUILD
         COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/CompileShaders.bat"
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMENT "Running CompileShaders.bat to compile shaders..."
@@ -128,31 +178,13 @@ if(MSVC)
     )
 
     # Add a pre-build step to copy assets after shader compilation
-    add_custom_command(TARGET IliadEngine PRE_BUILD
+    add_custom_command(TARGET IliadProject PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${ASSETS_DIR}" "$<TARGET_FILE_DIR:IliadEngine>/Assets"
+            "${ASSETS_DIR}" "$<TARGET_FILE_DIR:IliadProject>/Assets"
         COMMENT "Copying Assets to the executable directory..."
         VERBATIM
     )
 endif()
 
-# ------------------------------------------------------------------------
-# Post-Build Step to Copy Assets (Removed to Prevent Cyclic Dependency)
-# ------------------------------------------------------------------------
-# The post-build asset copying is removed to avoid conflicting with pre-build steps
-# If you prefer to keep asset copying here instead of pre-build, ensure that pre-build steps do not copy assets
-
-# Remove or comment out the existing post-build asset copy to prevent duplication and potential cycles
-# add_custom_command(
-#     TARGET IliadEngine POST_BUILD
-#     COMMAND ${CMAKE_COMMAND} -E copy_directory
-#     "${ASSETS_DIR}" "$<TARGET_FILE_DIR:IliadEngine>/Assets"
-# )
-
-# Additional CMake configurations for Vulkan (optional if needed)
-if(WIN32)
-    target_compile_definitions(IliadEngine PRIVATE VK_USE_PLATFORM_WIN32_KHR)
-endif()
-
 # Set working directory to the location of the executable (for Visual Studio .sln files)
-set_property(TARGET IliadEngine PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:IliadEngine>")
+set_property(TARGET IliadProject PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:IliadProject>")

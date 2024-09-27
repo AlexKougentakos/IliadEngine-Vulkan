@@ -47,7 +47,7 @@ namespace ili
     }
 
     // Class Member Functions
-    Device::Device(Window& window) : m_pWindow{ &window }
+    Device::Device(Window* window) : m_pWindow{ window }
     {
         CreateInstance();
         SetupDebugMessenger();

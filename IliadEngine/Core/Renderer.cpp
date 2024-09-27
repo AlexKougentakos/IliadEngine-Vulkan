@@ -7,7 +7,7 @@
 
 namespace ili
 {
-	Renderer::Renderer(Window& window, Device& device) : m_Window(window), m_Device(device)
+	Renderer::Renderer(Window* window, Device& device) : m_Window(window), m_Device(device)
 	{
 		RecreateSwapChain();
 		CreateCommandBuffers();
@@ -63,9 +63,9 @@ namespace ili
 
 		const auto result = m_pSwapChain->SubmitCommandBuffers(&commandBuffer, &m_CurrentImageIndex);
 
-		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_Window.WasWindowResized())
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_Window->WasWindowResized())
 		{
-			m_Window.ResetWindowResizedFlag();
+			m_Window->ResetWindowResizedFlag();
 			RecreateSwapChain();
 		}
 
@@ -140,11 +140,11 @@ namespace ili
 
 	void Renderer::RecreateSwapChain()
 	{
-		auto extent = m_Window.GetExtent();
+		auto extent = m_Window->GetExtent();
 
 		while (extent.width == 0 || extent.height == 0)
 		{
-			extent = m_Window.GetExtent();
+			extent = m_Window->GetExtent();
 			glfwWaitEvents();
 		}
 
