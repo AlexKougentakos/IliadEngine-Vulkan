@@ -24,6 +24,7 @@ namespace ili
 			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT)
 			.build();
 
+		m_pCurrentScene = m_SceneManager.CreateScene("main");
 		LoadGameObjects();
 	}
 
@@ -61,7 +62,7 @@ namespace ili
 		
 		camera.SetViewTarget({ 0.f, 0.f, 0.f }, { 0.5f, 0.f, 1.f });
 
-		auto viewerObject = m_Scene.CreateGameObject();
+		auto viewerObject = m_pCurrentScene->CreateGameObject();
 		viewerObject->GetTransform().position = { 0.f, 0.f, -1.f };
 		KeyboardMovementController cameraController{};
 
@@ -94,13 +95,13 @@ namespace ili
 				globalUbo.projectionMatrix = camera.GetProjection();
 				globalUbo.viewMatrix = camera.GetView();
 				globalUbo.inverseViewMatrix = camera.GetInverseView();
-				pointLightSystem.Update(frameInfo, globalUbo, m_Scene.GetGameObjects());
+				pointLightSystem.Update(frameInfo, globalUbo, m_pCurrentScene->GetGameObjects());
 				uboBuffers[frameIndex]->WriteToBuffer(&globalUbo);
 				uboBuffers[frameIndex]->Flush();
 
 				m_Renderer.BeginSwapChainRenderPass(commandBuffer);
-				renderSystem.RenderGameObjects(frameInfo, m_Scene.GetGameObjects());
-				pointLightSystem.Render(frameInfo, m_Scene.GetGameObjects());
+				renderSystem.RenderGameObjects(frameInfo, m_pCurrentScene->GetGameObjects());
+				pointLightSystem.Render(frameInfo, m_pCurrentScene->GetGameObjects());
 				m_Renderer.EndSwapChainRenderPass(commandBuffer);
 				m_Renderer.EndFrame();
 			}
@@ -113,7 +114,7 @@ namespace ili
 	{
 		const std::shared_ptr<Model> bunnyModel = Model::CreateModelFromFile(m_Device, "Assets/Models/bunny.obj");
 
-		auto bunny1 = m_Scene.CreateGameObject();
+		auto bunny1 = m_pCurrentScene->CreateGameObject();
 		bunny1->SetModel(bunnyModel);
 		bunny1->GetTransform().position = { -0.5f, 0.f, 0.f };
 		bunny1->GetTransform().rotation = { 0.f, 180.f, 0.f };
@@ -121,7 +122,7 @@ namespace ili
 
 
 		// Second bunny
-		auto bunny2 = m_Scene.CreateGameObject();
+		auto bunny2 = m_pCurrentScene->CreateGameObject();
 		bunny2->SetModel(bunnyModel);
 		bunny2->GetTransform().position = { 0.5f, 0.f, 0.f }; // Position it to the right of the light
 		bunny2->GetTransform().rotation = { 0.f, 180.f, 0.f };
@@ -134,14 +135,14 @@ namespace ili
 
 		// Example vase and floor objects (optional, retained for context)
 		const std::shared_ptr<Model> vase = Model::CreateModelFromFile(m_Device, "Assets/Models/flat_vase.obj");
-		auto vaseObject = m_Scene.CreateGameObject();
+		auto vaseObject = m_pCurrentScene->CreateGameObject();
 		vaseObject->SetModel(vase);
 		vaseObject->GetTransform().position = { 1.0f, 0.f, 0.0f };
 		vaseObject->GetTransform().rotation = { 0.f, 0.f, 0.f };
 		vaseObject->GetTransform().scale = { 1.f, 0.5f, 1.f };
 
 		const std::shared_ptr<Model> floor = Model::CreateModelFromFile(m_Device, "Assets/Models/quad.obj");
-		auto floorObject = m_Scene.CreateGameObject();
+		auto floorObject = m_pCurrentScene->CreateGameObject();
 		floorObject->SetModel(floor);
 		floorObject->GetTransform().position = { 0.5f, 0.f, 0.0f };
 		floorObject->GetTransform().rotation = { 0.f, 0.f, 0.f };

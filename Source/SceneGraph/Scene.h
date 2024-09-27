@@ -9,7 +9,6 @@ namespace ili
     class Scene 
     {
     public:
-        Scene() = default;
         ~Scene() = default;
 
         Scene(const Scene&) = delete;
@@ -21,6 +20,9 @@ namespace ili
 
         void Update(float deltaTime);
     private:
+        friend class SceneManager; //Factory pattern
+        Scene() = default;
+
         std::vector<std::unique_ptr<GameObject>> m_pGameObjects;
 		unsigned int m_IdCounter{};
     };

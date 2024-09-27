@@ -1,12 +1,10 @@
 ﻿#pragma once
 #include "Window.h"
 
-#include "../Graphics/Pipeline.h"
-#include "../Graphics/Device.h"
+#include "Graphics/Device.h"
 #include "Renderer.h"
 #include "Graphics/Descriptors.h"
-#include "SceneGraph/GameObject.h"
-#include "SceneGraph/Scene.h"
+#include "SceneGraph/SceneManager.h"
 
 namespace ili
 {
@@ -32,9 +30,9 @@ namespace ili
 		Window m_Window;
 		Device m_Device{ m_Window };
 		Renderer m_Renderer{ m_Window, m_Device };
+		SceneManager m_SceneManager{};
 
 		std::unique_ptr<DescriptorPool> m_GlobalDescriptorPool{};
-
-		Scene m_Scene{};
+		Scene* m_pCurrentScene{ nullptr };
 	};
 }
