@@ -61,8 +61,8 @@ namespace ili
 		
 		camera.SetViewTarget({ 0.f, 0.f, 0.f }, { 0.5f, 0.f, 1.f });
 
-		auto viewerObject = GameObject::Create();
-		viewerObject.GetTransform().position = { 0.f, 0.f, -1.f };
+		auto viewerObject = m_Scene.CreateGameObject();
+		viewerObject->GetTransform().position = { 0.f, 0.f, -1.f };
 		KeyboardMovementController cameraController{};
 
 
@@ -77,8 +77,8 @@ namespace ili
 			const auto frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
 			currentTime = newTime;
 
-			cameraController.MoveInPlaneXZ(m_Window.GetWindow(), frameTime, viewerObject);
-			camera.SetViewYXZ(viewerObject.GetTransform().position, viewerObject.GetTransform().rotation);
+			cameraController.MoveInPlaneXZ(m_Window.GetWindow(), frameTime, *viewerObject);
+			camera.SetViewYXZ(viewerObject->GetTransform().position, viewerObject->GetTransform().rotation);
 
 			//Placed inside the loop so that it is kept up to date when the window is resized
 			const float aspectRation = m_Renderer.GetAspectRatio();
@@ -94,13 +94,13 @@ namespace ili
 				globalUbo.projectionMatrix = camera.GetProjection();
 				globalUbo.viewMatrix = camera.GetView();
 				globalUbo.inverseViewMatrix = camera.GetInverseView();
-				pointLightSystem.Update(frameInfo, globalUbo, m_GameObjects);
+				pointLightSystem.Update(frameInfo, globalUbo, m_Scene.GetGameObjects());
 				uboBuffers[frameIndex]->WriteToBuffer(&globalUbo);
 				uboBuffers[frameIndex]->Flush();
 
 				m_Renderer.BeginSwapChainRenderPass(commandBuffer);
-				renderSystem.RenderGameObjects(frameInfo, m_GameObjects);
-				pointLightSystem.Render(frameInfo, m_GameObjects);
+				renderSystem.RenderGameObjects(frameInfo, m_Scene.GetGameObjects());
+				pointLightSystem.Render(frameInfo, m_Scene.GetGameObjects());
 				m_Renderer.EndSwapChainRenderPass(commandBuffer);
 				m_Renderer.EndFrame();
 			}
@@ -113,46 +113,38 @@ namespace ili
 	{
 		const std::shared_ptr<Model> bunnyModel = Model::CreateModelFromFile(m_Device, "Assets/Models/bunny.obj");
 
-		// First bunny
-		auto bunny1 = GameObject::Create();
-		bunny1.SetModel(bunnyModel);
-		bunny1.GetTransform().position = { -0.5f, 0.f, 0.f }; // Position it to the left of the light
-		bunny1.GetTransform().rotation = { 0.f, 180.f, 0.f };
-		bunny1.GetTransform().scale = { 0.5f, -0.5f, 0.5f };
+		auto bunny1 = m_Scene.CreateGameObject();
+		bunny1->SetModel(bunnyModel);
+		bunny1->GetTransform().position = { -0.5f, 0.f, 0.f };
+		bunny1->GetTransform().rotation = { 0.f, 180.f, 0.f };
+		bunny1->GetTransform().scale = { 0.5f, -0.5f, 0.5f };
+
 
 		// Second bunny
-		auto bunny2 = GameObject::Create();
-		bunny2.SetModel(bunnyModel);
-		bunny2.GetTransform().position = { 0.5f, 0.f, 0.f }; // Position it to the right of the light
-		bunny2.GetTransform().rotation = { 0.f, 180.f, 0.f };
-		bunny2.GetTransform().scale = { 0.5f, -0.5f, 0.5f };
+		auto bunny2 = m_Scene.CreateGameObject();
+		bunny2->SetModel(bunnyModel);
+		bunny2->GetTransform().position = { 0.5f, 0.f, 0.f }; // Position it to the right of the light
+		bunny2->GetTransform().rotation = { 0.f, 180.f, 0.f };
+		bunny2->GetTransform().scale = { 0.5f, -0.5f, 0.5f };
 
 		// Light in the middle of the two bunnies
-		GameObject pointLightComponent = GameObject::MakePointLight(0.2f);
-		pointLightComponent.GetTransform().position = { 0.f, -0.5f, 0.f }; // Slightly above ground level
-		pointLightComponent.SetColor({ 1.f, 0.f, 0.f });
+		//GameObject pointLightComponent = GameObject::MakePointLight(0.2f);
+		//pointLightComponent.GetTransform().position = { 0.f, -0.5f, 0.f }; // Slightly above ground level
+		//pointLightComponent.SetColor({ 1.f, 0.f, 0.f });
 
 		// Example vase and floor objects (optional, retained for context)
 		const std::shared_ptr<Model> vase = Model::CreateModelFromFile(m_Device, "Assets/Models/flat_vase.obj");
-		auto vaseObject = GameObject::Create();
-		vaseObject.SetModel(vase);
-		vaseObject.GetTransform().position = { 1.0f, 0.f, 0.0f };
-		vaseObject.GetTransform().rotation = { 0.f, 0.f, 0.f };
-		vaseObject.GetTransform().scale = { 1.f, 0.5f, 1.f };
+		auto vaseObject = m_Scene.CreateGameObject();
+		vaseObject->SetModel(vase);
+		vaseObject->GetTransform().position = { 1.0f, 0.f, 0.0f };
+		vaseObject->GetTransform().rotation = { 0.f, 0.f, 0.f };
+		vaseObject->GetTransform().scale = { 1.f, 0.5f, 1.f };
 
 		const std::shared_ptr<Model> floor = Model::CreateModelFromFile(m_Device, "Assets/Models/quad.obj");
-		auto floorObject = GameObject::Create();
-		floorObject.SetModel(floor);
-		floorObject.GetTransform().position = { 0.5f, 0.f, 0.0f };
-		floorObject.GetTransform().rotation = { 0.f, 0.f, 0.f };
-		floorObject.GetTransform().scale = { 3.f, 0.5f, 3.f };
-
-		// Add all objects to the game
-		m_GameObjects.push_back(std::move(pointLightComponent));
-		m_GameObjects.push_back(std::move(bunny1));
-		m_GameObjects.push_back(std::move(bunny2));
-		m_GameObjects.push_back(std::move(vaseObject));
-		m_GameObjects.push_back(std::move(floorObject));
+		auto floorObject = m_Scene.CreateGameObject();
+		floorObject->SetModel(floor);
+		floorObject->GetTransform().position = { 0.5f, 0.f, 0.0f };
+		floorObject->GetTransform().rotation = { 0.f, 0.f, 0.f };
+		floorObject->GetTransform().scale = { 3.f, 0.5f, 3.f };
 	}
-
 }

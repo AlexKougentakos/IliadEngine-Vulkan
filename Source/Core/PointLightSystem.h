@@ -21,8 +21,8 @@ namespace ili
 		PointLightSystem(PointLightSystem&&) = delete;
 		PointLightSystem& operator=(PointLightSystem&&) = delete;
 
-		void Update(const FrameInfo& frameInfo, GlobalUbo& ubo, std::vector<GameObject>& gameObjects);
-		void Render(const FrameInfo& frameInfo, std::vector<GameObject>& gameObjects);
+		void Update(const FrameInfo& frameInfo, GlobalUbo& ubo, std::vector<std::unique_ptr<GameObject>>& gameObjects);
+		void Render(const FrameInfo& frameInfo, std::vector<std::unique_ptr<GameObject>>& gameObjects);
 	private:
 		void CreatePipelineLayout(VkDescriptorSetLayout globalSetLayout);
 		void CreatePipeline(VkRenderPass renderPass);

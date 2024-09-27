@@ -68,15 +68,15 @@ namespace ili
 		m_Pipeline = std::make_unique<Pipeline>(m_Device, "Assets/CompiledShaders/pointLight.vert.spv", "Assets/CompiledShaders/pointLight.frag.spv", pipelineConfig);
 	}
 
-	void PointLightSystem::Update(const FrameInfo& frameInfo, GlobalUbo& ubo, std::vector<GameObject>& gameObjects)
+	void PointLightSystem::Update(const FrameInfo& frameInfo, GlobalUbo& ubo, std::vector<std::unique_ptr<GameObject>>& gameObjects)
 	{
 		int lightIndex{};
 		for (auto& obj : gameObjects)
 		{
-			if (!obj.GetPointLightComponent()) continue;
+			if (!obj->GetPointLightComponent()) continue;
 
-			ubo.pointLights[lightIndex].position = glm::vec4(obj.GetTransform().position, 1.f);
-			ubo.pointLights[lightIndex].color = glm::vec4(obj.GetColor(), obj.GetPointLightComponent()->lightIntensity);
+			ubo.pointLights[lightIndex].position = glm::vec4(obj->GetTransform().position, 1.f);
+			ubo.pointLights[lightIndex].color = glm::vec4(obj->GetColor(), obj->GetPointLightComponent()->lightIntensity);
 
 			lightIndex++;
 		}
@@ -84,7 +84,7 @@ namespace ili
 		ubo.pointLightCount = lightIndex;
 	}
 
-	void PointLightSystem::Render(const FrameInfo& frameInfo, std::vector<GameObject>& gameObjects)
+	void PointLightSystem::Render(const FrameInfo& frameInfo, std::vector<std::unique_ptr<GameObject>>& gameObjects)
 	{
 		m_Pipeline->Bind(frameInfo.commandBuffer);
 
@@ -93,12 +93,12 @@ namespace ili
 
 		for (auto& obj : gameObjects)
 		{
-			if (!obj.GetPointLightComponent()) return;
+			if (!obj->GetPointLightComponent()) return;
 
 			PointLightPushConstants pushConstants{};
-			pushConstants.position = glm::vec4(obj.GetTransform().position, 1.f);
-			pushConstants.color = glm::vec4(obj.GetColor(), obj.GetPointLightComponent()->lightIntensity);
-			pushConstants.radius = obj.GetTransform().scale.x;
+			pushConstants.position = glm::vec4(obj->GetTransform().position, 1.f);
+			pushConstants.color = glm::vec4(obj->GetColor(), obj->GetPointLightComponent()->lightIntensity);
+			pushConstants.radius = obj->GetTransform().scale.x;
 
 			vkCmdPushConstants(frameInfo.commandBuffer, 
 				m_PipelineLayout, 

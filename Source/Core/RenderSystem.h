@@ -20,7 +20,7 @@ namespace ili
 		RenderSystem(RenderSystem&&) = delete;
 		RenderSystem& operator=(RenderSystem&&) = delete;
 
-		void RenderGameObjects(const FrameInfo& frameInfo, const std::vector<GameObject>& gameObjects);
+		void RenderGameObjects(const FrameInfo& frameInfo, const std::vector<std::unique_ptr<GameObject>>& gameObjects);
 	private:
 		void CreatePipelineLayout(VkDescriptorSetLayout globalSetLayout);
 		void CreatePipeline(VkRenderPass renderPass);

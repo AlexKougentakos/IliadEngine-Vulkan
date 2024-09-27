@@ -66,11 +66,12 @@ namespace ili
 
 	GameObject GameObject::MakePointLight(float intensity, float radius, glm::vec3 color)
 	{
-		GameObject pointLight = GameObject::Create();
+		/*GameObject pointLight = GameObject::Create();
 		pointLight.SetColor(color);
 		pointLight.GetTransform().scale.x = radius;
 		pointLight.m_PointLightComponent = std::make_unique<PointLightComponent>();
 		pointLight.m_PointLightComponent->lightIntensity = intensity;
-		return pointLight;
+		return pointLight;*/
+		return{0};
 	}
 }

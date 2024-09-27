@@ -30,18 +30,13 @@ namespace ili
 	public:
 		~GameObject() = default;
 
-		GameObject(const GameObject&) = default;
-		GameObject(GameObject&&) = default;
+		// Enable move semantics
+		GameObject(GameObject&&) noexcept = default;
+		GameObject& operator=(GameObject&&) noexcept = default;
+
+		// Delete copy semantics
+		GameObject(const GameObject&) = delete;
 		GameObject& operator=(const GameObject&) = delete;
-		GameObject& operator=(GameObject&&) = delete;
-
-
-		//Todo:: move this to the Scene when I add it
-		static GameObject Create() 
-		{ 
-			static unsigned int currentId = 0;
-			return GameObject(currentId++);
-		}
 
 		void SetModel(std::shared_ptr<Model> model) { m_Model = model; }
 		std::shared_ptr<Model> GetModel() const { return m_Model; }
@@ -59,6 +54,7 @@ namespace ili
 
 		unsigned int GetId() const { return m_Id; }
 	private:
+		friend class Scene;
 		GameObject(const unsigned int id) : m_Id(id) {}
 
 		glm::vec3 m_Color{};

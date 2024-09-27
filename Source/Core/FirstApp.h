@@ -6,6 +6,7 @@
 #include "Renderer.h"
 #include "Graphics/Descriptors.h"
 #include "SceneGraph/GameObject.h"
+#include "SceneGraph/Scene.h"
 
 namespace ili
 {
@@ -33,6 +34,7 @@ namespace ili
 		Renderer m_Renderer{ m_Window, m_Device };
 
 		std::unique_ptr<DescriptorPool> m_GlobalDescriptorPool{};
-		std::vector<GameObject> m_GameObjects{};
+
+		Scene m_Scene{};
 	};
 }

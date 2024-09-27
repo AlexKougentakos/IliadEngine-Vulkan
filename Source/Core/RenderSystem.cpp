@@ -64,7 +64,7 @@ namespace ili
 		m_Pipeline = std::make_unique<Pipeline>(m_Device, "Assets/CompiledShaders/shader.vert.spv", "Assets/CompiledShaders/shader.frag.spv", pipelineConfig);
 	}
 
-	void RenderSystem::RenderGameObjects(const FrameInfo& frameInfo, const std::vector<GameObject>& gameObjects)
+	void RenderSystem::RenderGameObjects(const FrameInfo& frameInfo, const std::vector<std::unique_ptr<GameObject>>& gameObjects)
 	{
 		m_Pipeline->Bind(frameInfo.commandBuffer);
 
@@ -73,18 +73,18 @@ namespace ili
 
 		for (const auto& gameObject : gameObjects)
 		{
-			if (!gameObject.GetModel()) continue;
+			if (!gameObject->GetModel()) continue;
 
 			SimplePushConstantData pushData{};
 
-			pushData.modelMatrix = gameObject.GetTransformConst().GetMatrix();
-			pushData.normalMatrix = gameObject.GetTransformConst().GetNormalMatrix();
+			pushData.modelMatrix = gameObject->GetTransformConst().GetMatrix();
+			pushData.normalMatrix = gameObject->GetTransformConst().GetNormalMatrix();
 
 			vkCmdPushConstants(frameInfo.commandBuffer, m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &pushData);
 
 
-			gameObject.GetModel()->Bind(frameInfo.commandBuffer);
-			gameObject.GetModel()->Draw(frameInfo.commandBuffer);
+			gameObject->GetModel()->Bind(frameInfo.commandBuffer);
+			gameObject->GetModel()->Draw(frameInfo.commandBuffer);
 		}
 	}
 }
