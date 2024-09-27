@@ -1,39 +1,42 @@
 #version 450
 
 layout (location = 0) in vec3 fragColor;
-layout (location = 1) in vec3 fragPositionWorld;
+layout (location = 1) in vec3 fragPosWorld;
 layout (location = 2) in vec3 fragNormalWorld;
 
 layout (location = 0) out vec4 outColor;
 
-layout(set = 0, binding = 0) uniform GlobalUbo
-{
-	mat4 projectionMatrix;
-	mat4 viewMatrix;
-	
-	vec4 ambientColor; //Alpha channel is intensity
-	vec4 lightPosition; //Ignore the w component, it's just there for padding
-	vec4 lightColor; //Alpha channel is intensity
-} globalUbo;
+struct PointLight {
+  vec4 position; // ignore w
+  vec4 color; // w is intensity
+};
 
+layout(set = 0, binding = 0) uniform GlobalUbo {
+  mat4 projection;
+  mat4 view;
+  vec4 ambientLightColor; // w is intensity
+  PointLight pointLights[10];
+  int numLights;
+} ubo;
 
-layout(push_constant) uniform Push 
-{
+layout(push_constant) uniform Push {
   mat4 modelMatrix;
   mat4 normalMatrix;
 } push;
 
-void main() 
-{
-	vec3 lightDirection = globalUbo.lightPosition.xyz - fragPositionWorld;
+void main() {
+  vec3 diffuseLight = ubo.ambientLightColor.xyz * ubo.ambientLightColor.w;
+  vec3 surfaceNormal = normalize(fragNormalWorld);
 
-	//Do this BEFORE normalizing the light direction
-	float attenuation = 1.0 / dot(lightDirection, lightDirection); // Getting the dot product of a vector with itself is a quick/efficient way to get the length squared
+  for (int i = 0; i < ubo.numLights; i++) {
+    PointLight light = ubo.pointLights[i];
+    vec3 directionToLight = light.position.xyz - fragPosWorld;
+    float attenuation = 1.0 / dot(directionToLight, directionToLight); // distance squared
+    float cosAngIncidence = max(dot(surfaceNormal, normalize(directionToLight)), 0);
+    vec3 intensity = light.color.xyz * light.color.w * attenuation;
 
-
-	vec3 lightColor = globalUbo.lightColor.xyz * globalUbo.lightColor.w * attenuation;
-	vec3 ambientLight = globalUbo.ambientColor.xyz * globalUbo.ambientColor.w;
-	vec3 diffuseLight = lightColor * max(dot(normalize(fragNormalWorld), normalize(lightDirection)), 0);
-
-	outColor = vec4((diffuseLight + ambientLight) * lightColor, 1.0);
+    diffuseLight += intensity * cosAngIncidence;
+  }
+  
+  outColor = vec4(diffuseLight * fragColor, 1.0);
 }

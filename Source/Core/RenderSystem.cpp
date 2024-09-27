@@ -73,12 +73,15 @@ namespace ili
 
 		for (const auto& gameObject : gameObjects)
 		{
+			if (!gameObject.GetModel()) continue;
+
 			SimplePushConstantData pushData{};
 
 			pushData.modelMatrix = gameObject.GetTransformConst().GetMatrix();
 			pushData.normalMatrix = gameObject.GetTransformConst().GetNormalMatrix();
 
 			vkCmdPushConstants(frameInfo.commandBuffer, m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &pushData);
+
 
 			gameObject.GetModel()->Bind(frameInfo.commandBuffer);
 			gameObject.GetModel()->Draw(frameInfo.commandBuffer);

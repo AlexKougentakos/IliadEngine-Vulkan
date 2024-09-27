@@ -20,6 +20,11 @@ namespace ili
 		glm::mat3 GetNormalMatrix() const;
 	};
 
+	struct PointLightComponent
+	{
+		float lightIntensity{ 1.f };
+	};
+
 	class GameObject
 	{
 	public:
@@ -47,6 +52,8 @@ namespace ili
 		TransformComponent& GetTransform() { return m_TransformComponent; }
 		const TransformComponent& GetTransformConst() const { return m_TransformComponent; }
 
+		const std::unique_ptr<PointLightComponent>& GetPointLightComponent() { return m_PointLightComponent; }
+		static GameObject MakePointLight(float intensity = 10.f, float radius = 0.1f, glm::vec3 color = glm::vec3(1.f, 1.f, 1.f));
 
 		void Translate(const glm::vec3& translation) { m_TransformComponent.position += translation; }
 
@@ -54,9 +61,11 @@ namespace ili
 	private:
 		GameObject(const unsigned int id) : m_Id(id) {}
 
-		std::shared_ptr<Model> m_Model{};
 		glm::vec3 m_Color{};
 		TransformComponent m_TransformComponent{};
+
+		std::shared_ptr<Model> m_Model{};
+		std::unique_ptr<PointLightComponent> m_PointLightComponent{};
 
 		unsigned int m_Id{};
 	};
