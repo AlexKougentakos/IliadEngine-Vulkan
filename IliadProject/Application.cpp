@@ -13,7 +13,7 @@
 #include "Core/RenderSystem.h"
 #include "Graphics/Descriptors.h"
 #include "Input/KeyboardInputMovement.h"
-#include "ProjectCore/IliadSampleProject .h"
+#include "ProjectCore/IliadSampleProject.h"
 #include "SceneGraph/SceneManager.h"
 int main()
 {

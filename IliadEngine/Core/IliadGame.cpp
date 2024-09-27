@@ -86,7 +86,6 @@ namespace ili
 			m_PointLightSystem.value().Render(frameInfo, m_pCurrentScene->GetGameObjects());
 			m_Renderer->EndSwapChainRenderPass(commandBuffer);
 			m_Renderer->EndFrame();
-
 		}
 	}
 

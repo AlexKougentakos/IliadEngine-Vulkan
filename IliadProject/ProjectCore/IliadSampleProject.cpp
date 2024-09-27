@@ -1,4 +1,4 @@
-#include "IliadSampleProject .h"
+#include "IliadSampleProject.h"
 
 void IliadSampleProject::OnGamePreparing()
 {
