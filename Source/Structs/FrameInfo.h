@@ -17,6 +17,7 @@ namespace ili
 	{
 		glm::mat4 projectionMatrix{ 1.f };
 		glm::mat4 viewMatrix{ 1.f };
+		glm::mat4 inverseViewMatrix{ 1.f };
 
 		glm::vec4 ambientColor{ 1.f, 1.f, 1.f, 0.02f }; //Alpha channel is intensity
 		

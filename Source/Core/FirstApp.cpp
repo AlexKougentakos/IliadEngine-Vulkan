@@ -93,6 +93,7 @@ namespace ili
 				GlobalUbo globalUbo{};
 				globalUbo.projectionMatrix = camera.GetProjection();
 				globalUbo.viewMatrix = camera.GetView();
+				globalUbo.inverseViewMatrix = camera.GetInverseView();
 				pointLightSystem.Update(frameInfo, globalUbo, m_GameObjects);
 				uboBuffers[frameIndex]->WriteToBuffer(&globalUbo);
 				uboBuffers[frameIndex]->Flush();
