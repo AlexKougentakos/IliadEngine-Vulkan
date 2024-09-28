@@ -9,7 +9,7 @@ namespace ili
     class Scene 
     {
     public:
-        ~Scene() = default;
+        virtual ~Scene() = default;
 
         Scene(const Scene&) = delete;
         Scene& operator=(const Scene&) = delete;
@@ -18,11 +18,13 @@ namespace ili
         void RemoveGameObject(unsigned int id);
         std::vector<std::unique_ptr<GameObject>>& GetGameObjects();
 
-        void Update(float deltaTime);
-
-    private:
+        virtual void Initialize() = 0;
+        
+	protected:
         friend class SceneManager; //Factory pattern
         Scene() = default;
+
+        virtual void Update(float deltaTime) = 0;
 
         std::vector<std::unique_ptr<GameObject>> m_pGameObjects;
 		unsigned int m_IdCounter{};

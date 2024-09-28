@@ -22,9 +22,4 @@ namespace ili
     {
         return m_pGameObjects;
     }
-
-    void Scene::Update(float deltaTime) 
-    {
-        // Update game objects, perform scene logic, etc.
-    }
 }

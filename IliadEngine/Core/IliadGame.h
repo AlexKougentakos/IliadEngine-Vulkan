@@ -13,6 +13,8 @@
 
 #include <chrono>
 
+#include "ContentLoader.h"
+
 
 namespace ili
 {
@@ -35,6 +37,7 @@ namespace ili
 		virtual void InitializeGame() = 0;
 		void GameLoop(GameObject* viewerObject, KeyboardMovementController cameraController);
 
+		//todo: make this private again. Aka hide the device, window and renderer from the user
 	//private:
 		void InitializeWindow();
 		void InitializeVulkan();

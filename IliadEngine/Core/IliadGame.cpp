@@ -29,6 +29,10 @@ namespace ili
 		//**********
 		InitializeWindow();
 		InitializeVulkan();
+
+		ContentLoader::GetInstance().Initialize(m_Device.get());
+
+
 		InitializeGame();
 
 
@@ -39,7 +43,6 @@ namespace ili
 		viewerObject->GetTransform().position = { 0.f, 0.f, -1.f };
 		constexpr ili::KeyboardMovementController cameraController{};
 
-
 		m_CurrentTime = std::chrono::high_resolution_clock::now();
 
 		while (!m_Window->ShouldClose())
@@ -47,7 +50,6 @@ namespace ili
 			glfwPollEvents();
 
 			GameLoop(viewerObject, cameraController);
-
 		}
 
 		vkDeviceWaitIdle(m_Device->GetDevice());
@@ -77,6 +79,7 @@ namespace ili
 			globalUbo.projectionMatrix = m_Camera.GetProjection();
 			globalUbo.viewMatrix = m_Camera.GetView();
 			globalUbo.inverseViewMatrix = m_Camera.GetInverseView();
+			m_SceneManager.Update(frameTime);
 			m_PointLightSystem.value().Update(frameInfo, globalUbo, m_pCurrentScene->GetGameObjects());
 			m_UboBuffers[frameIndex]->WriteToBuffer(&globalUbo);
 			m_UboBuffers[frameIndex]->Flush();

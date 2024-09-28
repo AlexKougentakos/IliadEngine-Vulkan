@@ -1,71 +1,53 @@
 #pragma once
 
-#include "Device.h"
-#include "Buffer.h"
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include "Graphics/Device.h"
+#include "Graphics/Buffer.h"
 #include <glm/glm.hpp>
-
-#include <tiny_obj_loader.h>
+#include <vector>
+#include <vulkan/vulkan.h>
+#include <memory>
 
 namespace ili
 {
-	class Model
-	{
-	public:
-		struct Vertex
-		{
-			glm::vec3 position;
-			glm::vec3 color;
-			glm::vec3 normal;
-			glm::vec2 texCoord;
-			
-			static std::vector<VkVertexInputBindingDescription> GetBindingDescriptions();
-			static std::vector<VkVertexInputAttributeDescription> GetAttributeDescriptions();
+    class Model
+    {
+    public:
+        struct Vertex
+        {
+            glm::vec3 position{};
+            glm::vec3 color{};
+            glm::vec3 normal{};
+            glm::vec2 texCoord{};
 
-			bool operator==(const Vertex& other) const
-			{
-				return position == other.position && color == other.color && normal == other.normal && texCoord == other.texCoord;
-			}
-		};
+            static std::vector<VkVertexInputBindingDescription> GetBindingDescriptions();
+            static std::vector<VkVertexInputAttributeDescription> GetAttributeDescriptions();
 
-		struct Builder
-		{
-			std::vector<Vertex> vertices{};
-			std::vector<uint32_t> indices{};
+            bool operator==(const Vertex& other) const
+            {
+                return position == other.position && color == other.color && normal == other.normal && texCoord == other.texCoord;
+            }
+        };
 
-			void LoadModel(const std::string& filepath);
-		};
+        Model(Device& device, const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
+        ~Model();
 
-		Model(Device& device, const Builder& builder);
-		~Model();
+        Model(const Model&) = delete;
+        Model& operator=(const Model&) = delete;
 
-		Model(const Model& other) = delete;
-		Model(Model&& other) noexcept = delete;
-		Model& operator=(const Model& other) = delete;
-		Model& operator=(Model&& other) noexcept = delete;
+        void Bind(VkCommandBuffer commandBuffer) const;
+        void Draw(VkCommandBuffer commandBuffer) const;
 
-		static std::unique_ptr<Model> CreateModelFromFile(Device& device, const std::string& filepath);
+    private:
+        void CreateVertexBuffers(const std::vector<Vertex>& vertices);
+        void CreateIndexBuffers(const std::vector<uint32_t>& indices);
 
-		void Bind(VkCommandBuffer commandBuffer) const;
-		void Draw(VkCommandBuffer commandBuffer) const;
+        Device& m_Device;
 
-	private:
-		void CreateVertexBuffers(const std::vector<Vertex>& vertices);
-		void CreateIndexBuffers(const std::vector<uint32_t>& indices);
+        std::unique_ptr<Buffer> m_pVertexBuffer;
+        uint32_t m_VertexCount;
 
-		Device& m_Device;
-
-		std::unique_ptr<Buffer> m_pVertexBuffer{};
-		VkDeviceMemory m_VertexBufferMemory{};
-		uint32_t m_VertexCount{};
-
-		bool m_HasIndexBuffer{false};
-		std::unique_ptr<Buffer> m_pIndexBuffer{};
-		VkDeviceMemory m_IndexBufferMemory{};
-		uint32_t m_IndexCount{};
-
-	};
-
+        bool m_HasIndexBuffer = false;
+        std::unique_ptr<Buffer> m_pIndexBuffer;
+        uint32_t m_IndexCount;
+    };
 }
