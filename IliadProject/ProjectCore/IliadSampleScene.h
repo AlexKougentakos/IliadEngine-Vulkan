@@ -5,7 +5,6 @@ class IliadSampleScene : public ili::Scene
 {
 public:
 	IliadSampleScene() = default;
-	virtual ~IliadSampleScene() override = default;
 
 	IliadSampleScene(const IliadSampleScene& other) = delete;
 	IliadSampleScene(IliadSampleScene&& other) noexcept = delete;

@@ -16,6 +16,9 @@
 #include "SceneGraph/SceneManager.h"
 
 #include "IliadGame.h"
+
+#include "SceneGraph/TransformComponent.h"
+
 namespace ili
 {
 
@@ -40,7 +43,7 @@ namespace ili
 		m_Camera.SetViewTarget({ 0.f, 0.f, 0.f }, { 0.5f, 0.f, 1.f });
 
 		const auto viewerObject = m_pCurrentScene->CreateGameObject();
-		viewerObject->GetTransform().position = { 0.f, 0.f, -1.f };
+		viewerObject->GetTransform()->position = { 0.f, 0.f, -1.f };
 		constexpr ili::KeyboardMovementController cameraController{};
 
 		m_CurrentTime = std::chrono::high_resolution_clock::now();
@@ -63,7 +66,7 @@ namespace ili
 		m_CurrentTime = newTime;
 
 		cameraController.MoveInPlaneXZ(m_Window->GetWindow(), frameTime, *viewerObject);
-		m_Camera.SetViewYXZ(viewerObject->GetTransform().position, viewerObject->GetTransform().rotation);
+		m_Camera.SetViewYXZ(viewerObject->GetTransform()->position, viewerObject->GetTransform()->rotation);
 
 		//Placed inside the loop so that it is kept up to date when the window is resized
 		const float aspectRatio = m_Renderer->GetAspectRatio();

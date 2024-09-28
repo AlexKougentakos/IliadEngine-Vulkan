@@ -10,6 +10,7 @@
 
 #include "../SceneGraph/GameObject.h"
 #include "../SceneGraph/Camera.h"
+#include "SceneGraph/TransformComponent.h"
 #include "Structs/FrameInfo.h"
 
 namespace ili
@@ -75,7 +76,7 @@ namespace ili
 		{
 			if (!obj->GetPointLightComponent()) continue;
 
-			ubo.pointLights[lightIndex].position = glm::vec4(obj->GetTransform().position, 1.f);
+			ubo.pointLights[lightIndex].position = glm::vec4(obj->GetTransform()->position, 1.f);
 			ubo.pointLights[lightIndex].color = glm::vec4(obj->GetColor(), obj->GetPointLightComponent()->lightIntensity);
 
 			lightIndex++;
@@ -96,9 +97,9 @@ namespace ili
 			if (!obj->GetPointLightComponent()) return;
 
 			PointLightPushConstants pushConstants{};
-			pushConstants.position = glm::vec4(obj->GetTransform().position, 1.f);
+			pushConstants.position = glm::vec4(obj->GetTransform()->position, 1.f);
 			pushConstants.color = glm::vec4(obj->GetColor(), obj->GetPointLightComponent()->lightIntensity);
-			pushConstants.radius = obj->GetTransform().scale.x;
+			pushConstants.radius = obj->GetTransform()->scale.x;
 
 			vkCmdPushConstants(frameInfo.commandBuffer, 
 				m_PipelineLayout, 

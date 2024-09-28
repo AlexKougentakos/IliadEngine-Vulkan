@@ -11,7 +11,6 @@ namespace ili
     class ContentLoader final : public Singleton<ContentLoader>
     {
     public:
-
         ContentLoader(const ContentLoader& other) = delete;
         ContentLoader(ContentLoader&& other) noexcept = delete;
         ContentLoader& operator=(const ContentLoader& other) = delete;
@@ -28,7 +27,6 @@ namespace ili
     private:
         friend class Singleton<ContentLoader>;
         ContentLoader() = default;
-
 
         ili::Device* m_pDevice = nullptr;
 

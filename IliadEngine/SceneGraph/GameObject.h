@@ -1,24 +1,11 @@
 #pragma once
 
+#include "TransformComponent.h"
 #include "../Graphics/Model.h"
 #include "glm/ext/matrix_transform.hpp"
 
 namespace ili
 {
-
-	struct TransformComponent
-	{
-		glm::vec3 position{};
-		glm::vec3 scale{ 1.f, 1.f, 1.f };
-		glm::vec3 rotation{0.f};
-
-		// Rotations correspond to Tait-bryan angles of Y(1), X(2), Z(3)
-		// To read the rotations as Intrinsic (local) read left to right. To read as Extrinsic (global) read right to left
-		// Optimization to not calculate the matrices entirely:
-		// https://en.wikipedia.org/wiki/Euler_angles#Rotation_matrix
-		glm::mat4 GetMatrix() const;
-		glm::mat3 GetNormalMatrix() const;
-	};
 
 	struct PointLightComponent
 	{
@@ -28,7 +15,7 @@ namespace ili
 	class GameObject
 	{
 	public:
-		~GameObject() = default;
+		virtual ~GameObject() = default;
 
 		// Enable move semantics
 		GameObject(GameObject&&) noexcept = default;
@@ -44,21 +31,37 @@ namespace ili
 		void SetColor(const glm::vec3& color) { m_Color = color; }
 		glm::vec3 GetColor() const { return m_Color; }
 		
-		TransformComponent& GetTransform() { return m_TransformComponent; }
-		const TransformComponent& GetTransformConst() const { return m_TransformComponent; }
+		TransformComponent* GetTransform() const { return m_pTransformComponent; }
 
 		const std::unique_ptr<PointLightComponent>& GetPointLightComponent() { return m_PointLightComponent; }
-		static GameObject MakePointLight(float intensity = 10.f, float radius = 0.1f, glm::vec3 color = glm::vec3(1.f, 1.f, 1.f));
+		//static GameObject MakePointLight(float intensity = 10.f, float radius = 0.1f, glm::vec3 color = glm::vec3(1.f, 1.f, 1.f));
 
-		void Translate(const glm::vec3& translation) { m_TransformComponent.position += translation; }
+		template<typename T, typename... Args>
+		T* AddComponent(Args&&... args)
+		{
+			static_assert(std::is_base_of<BaseComponent, T>::value, "T must derive from BaseComponent");
+			auto component = std::make_unique<T>(std::forward<Args>(args)...);
+			auto ptr = component.get();
+			ptr->m_pGameObject = this;
+			m_pComponents.push_back(std::move(component));
+			return ptr;
+		}
 
 		unsigned int GetId() const { return m_Id; }
+
+	protected:
+		virtual void Update() {}
 	private:
 		friend class Scene;
-		GameObject(const unsigned int id) : m_Id(id) {}
+		GameObject(const unsigned int id);
+
+		void RootUpdate();
+
 
 		glm::vec3 m_Color{};
-		TransformComponent m_TransformComponent{};
+		TransformComponent* m_pTransformComponent{};
+
+		std::vector<std::unique_ptr<BaseComponent>> m_pComponents{};
 
 		std::shared_ptr<Model> m_Model{};
 		std::unique_ptr<PointLightComponent> m_PointLightComponent{};

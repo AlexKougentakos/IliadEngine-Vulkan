@@ -10,6 +10,7 @@
 
 #include "../SceneGraph/GameObject.h"
 #include "../SceneGraph/Camera.h"
+#include "SceneGraph/TransformComponent.h"
 #include "Structs/FrameInfo.h"
 
 namespace ili
@@ -77,8 +78,8 @@ namespace ili
 
 			SimplePushConstantData pushData{};
 
-			pushData.modelMatrix = gameObject->GetTransformConst().GetMatrix();
-			pushData.normalMatrix = gameObject->GetTransformConst().GetNormalMatrix();
+			pushData.modelMatrix = gameObject->GetTransform()->GetMatrix();
+			pushData.normalMatrix = gameObject->GetTransform()->GetNormalMatrix();
 
 			vkCmdPushConstants(frameInfo.commandBuffer, m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &pushData);
 
