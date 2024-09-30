@@ -42,7 +42,7 @@ namespace ili
 		//Todo: remove these from here
 		m_Camera.SetViewTarget({ 0.f, 0.f, 0.f }, { 0.5f, 0.f, 1.f });
 
-		const auto viewerObject = m_pCurrentScene->CreateGameObject();
+		const auto viewerObject = m_pCurrentScene->CreateGameObject<GameObject>();
 		viewerObject->GetTransform()->position = { 0.f, 0.f, -1.f };
 		constexpr ili::KeyboardMovementController cameraController{};
 
@@ -83,13 +83,13 @@ namespace ili
 			globalUbo.viewMatrix = m_Camera.GetView();
 			globalUbo.inverseViewMatrix = m_Camera.GetInverseView();
 			m_SceneManager.Update(frameTime);
-			m_PointLightSystem.value().Update(frameInfo, globalUbo, m_pCurrentScene->GetGameObjects());
+			m_PointLightSystem.value().Update(frameInfo, globalUbo, m_pCurrentScene->GetPointLights());
 			m_UboBuffers[frameIndex]->WriteToBuffer(&globalUbo);
 			m_UboBuffers[frameIndex]->Flush();
 
 			m_Renderer->BeginSwapChainRenderPass(commandBuffer);
 			m_RenderSystem.value().RenderGameObjects(frameInfo, m_pCurrentScene->GetGameObjects());
-			m_PointLightSystem.value().Render(frameInfo, m_pCurrentScene->GetGameObjects());
+			m_PointLightSystem.value().Render(frameInfo, m_pCurrentScene->GetPointLights());
 			m_Renderer->EndSwapChainRenderPass(commandBuffer);
 			m_Renderer->EndFrame();
 		}

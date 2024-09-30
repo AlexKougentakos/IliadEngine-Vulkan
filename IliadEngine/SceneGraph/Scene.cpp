@@ -2,11 +2,12 @@
 
 namespace ili 
 {
-    GameObject* Scene::CreateGameObject()
-    {
-		m_pGameObjects.emplace_back(std::unique_ptr<GameObject>(new GameObject(m_IdCounter++)));
-		return m_pGameObjects.back().get();
-    }
+	PointLightGameObject* Scene::CreatePointLight(float intensity, float radius, glm::vec3 color)
+	{
+		const auto light = new PointLightGameObject(m_IdCounter++, intensity, radius, color);
+		m_pPointLights.push_back(std::unique_ptr<PointLightGameObject>(light));
+		return light;
+	}
 
     void Scene::RemoveGameObject(unsigned int id) 
 	{
@@ -16,10 +17,5 @@ namespace ili
 		{
 			m_pGameObjects.erase(it);
 		}
-    }
-
-    std::vector<std::unique_ptr<GameObject>>& Scene::GetGameObjects()
-    {
-        return m_pGameObjects;
     }
 }

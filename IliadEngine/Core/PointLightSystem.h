@@ -7,6 +7,7 @@
 
 namespace ili
 {
+	class PointLightGameObject;
 	struct GlobalUbo;
 	struct FrameInfo;
 
@@ -21,8 +22,8 @@ namespace ili
 		PointLightSystem(PointLightSystem&&) = delete;
 		PointLightSystem& operator=(PointLightSystem&&) = delete;
 
-		void Update(const FrameInfo& frameInfo, GlobalUbo& ubo, std::vector<std::unique_ptr<GameObject>>& gameObjects);
-		void Render(const FrameInfo& frameInfo, std::vector<std::unique_ptr<GameObject>>& gameObjects);
+		void Update(const FrameInfo& frameInfo, GlobalUbo& ubo, std::vector<std::unique_ptr<PointLightGameObject>>& pointLights);
+		void Render(const FrameInfo& frameInfo, std::vector<std::unique_ptr<PointLightGameObject>>& pointLights);
 	private:
 		void CreatePipelineLayout(VkDescriptorSetLayout globalSetLayout);
 		void CreatePipeline(VkRenderPass renderPass);

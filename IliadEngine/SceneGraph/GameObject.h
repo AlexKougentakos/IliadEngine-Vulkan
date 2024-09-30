@@ -6,12 +6,6 @@
 
 namespace ili
 {
-
-	struct PointLightComponent
-	{
-		float lightIntensity{ 1.f };
-	};
-
 	class GameObject
 	{
 	public:
@@ -28,12 +22,11 @@ namespace ili
 		void SetModel(std::shared_ptr<Model> model) { m_Model = model; }
 		std::shared_ptr<Model> GetModel() const { return m_Model; }
 
-		void SetColor(const glm::vec3& color) { m_Color = color; }
-		glm::vec3 GetColor() const { return m_Color; }
+		//void SetColor(const glm::vec3& color) { m_Color = color; }
+		//glm::vec3 GetColor() const { return m_Color; }
 		
 		TransformComponent* GetTransform() const { return m_pTransformComponent; }
 
-		const std::unique_ptr<PointLightComponent>& GetPointLightComponent() { return m_PointLightComponent; }
 		//static GameObject MakePointLight(float intensity = 10.f, float radius = 0.1f, glm::vec3 color = glm::vec3(1.f, 1.f, 1.f));
 
 		template<typename T, typename... Args>
@@ -51,20 +44,19 @@ namespace ili
 
 	protected:
 		virtual void Update() {}
+		GameObject(const unsigned int id);
 	private:
 		friend class Scene;
-		GameObject(const unsigned int id);
 
 		void RootUpdate();
 
 
-		glm::vec3 m_Color{};
+		//glm::vec3 m_Color{};
 		TransformComponent* m_pTransformComponent{};
 
 		std::vector<std::unique_ptr<BaseComponent>> m_pComponents{};
 
 		std::shared_ptr<Model> m_Model{};
-		std::unique_ptr<PointLightComponent> m_PointLightComponent{};
 
 		unsigned int m_Id{};
 	};

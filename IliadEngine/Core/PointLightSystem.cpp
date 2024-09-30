@@ -6,6 +6,8 @@
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
+
+#include "PointLight.h"
 #include "glm/gtc/constants.hpp"
 
 #include "../SceneGraph/GameObject.h"
@@ -69,15 +71,13 @@ namespace ili
 		m_Pipeline = std::make_unique<Pipeline>(m_Device, "Assets/CompiledShaders/pointLight.vert.spv", "Assets/CompiledShaders/pointLight.frag.spv", pipelineConfig);
 	}
 
-	void PointLightSystem::Update(const FrameInfo& frameInfo, GlobalUbo& ubo, std::vector<std::unique_ptr<GameObject>>& gameObjects)
+	void PointLightSystem::Update(const FrameInfo& frameInfo, GlobalUbo& ubo, std::vector<std::unique_ptr<PointLightGameObject>>& pointLights)
 	{
 		int lightIndex{};
-		for (auto& obj : gameObjects)
+		for (auto& pointLight : pointLights)
 		{
-			if (!obj->GetPointLightComponent()) continue;
-
-			ubo.pointLights[lightIndex].position = glm::vec4(obj->GetTransform()->position, 1.f);
-			ubo.pointLights[lightIndex].color = glm::vec4(obj->GetColor(), obj->GetPointLightComponent()->lightIntensity);
+			ubo.pointLights[lightIndex].position = glm::vec4(pointLight->GetTransform()->position, 1.f);
+			ubo.pointLights[lightIndex].color = glm::vec4(pointLight->GetColor(), pointLight->GetIntensity());
 
 			lightIndex++;
 		}
@@ -85,21 +85,19 @@ namespace ili
 		ubo.pointLightCount = lightIndex;
 	}
 
-	void PointLightSystem::Render(const FrameInfo& frameInfo, std::vector<std::unique_ptr<GameObject>>& gameObjects)
+	void PointLightSystem::Render(const FrameInfo& frameInfo, std::vector<std::unique_ptr<PointLightGameObject>>& pointLights)
 	{
 		m_Pipeline->Bind(frameInfo.commandBuffer);
 
 		vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1,
 			&frameInfo.globalDescriptorSet, 0, nullptr);
 
-		for (auto& obj : gameObjects)
+		for (auto& pointLight : pointLights)
 		{
-			if (!obj->GetPointLightComponent()) return;
-
 			PointLightPushConstants pushConstants{};
-			pushConstants.position = glm::vec4(obj->GetTransform()->position, 1.f);
-			pushConstants.color = glm::vec4(obj->GetColor(), obj->GetPointLightComponent()->lightIntensity);
-			pushConstants.radius = obj->GetTransform()->scale.x;
+			pushConstants.position = glm::vec4(pointLight->GetTransform()->position, 1.f);
+			pushConstants.color = glm::vec4(pointLight->GetColor(), pointLight->GetIntensity());
+			pushConstants.radius = pointLight->GetRadius();
 
 			vkCmdPushConstants(frameInfo.commandBuffer, 
 				m_PipelineLayout, 
