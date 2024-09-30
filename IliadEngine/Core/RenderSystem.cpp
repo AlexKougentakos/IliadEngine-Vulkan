@@ -10,6 +10,7 @@
 
 #include "../SceneGraph/GameObject.h"
 #include "../SceneGraph/Camera.h"
+#include "SceneGraph/ModelComponent.h"
 #include "SceneGraph/TransformComponent.h"
 #include "Structs/FrameInfo.h"
 
@@ -74,7 +75,10 @@ namespace ili
 
 		for (const auto& gameObject : gameObjects)
 		{
-			if (!gameObject->GetModel()) continue;
+			const auto modelComponent = gameObject->GetComponent<ModelComponent>();
+			if (!modelComponent) continue;
+
+			if (!modelComponent->GetModel()) continue;
 
 			SimplePushConstantData pushData{};
 
@@ -84,8 +88,8 @@ namespace ili
 			vkCmdPushConstants(frameInfo.commandBuffer, m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &pushData);
 
 
-			gameObject->GetModel()->Bind(frameInfo.commandBuffer);
-			gameObject->GetModel()->Draw(frameInfo.commandBuffer);
+			modelComponent->GetModel()->Bind(frameInfo.commandBuffer);
+			modelComponent->GetModel()->Draw(frameInfo.commandBuffer);
 		}
 	}
 }

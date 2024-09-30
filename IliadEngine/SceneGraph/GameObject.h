@@ -19,9 +19,6 @@ namespace ili
 		GameObject(const GameObject&) = delete;
 		GameObject& operator=(const GameObject&) = delete;
 
-		void SetModel(std::shared_ptr<Model> model) { m_Model = model; }
-		std::shared_ptr<Model> GetModel() const { return m_Model; }
-
 		//void SetColor(const glm::vec3& color) { m_Color = color; }
 		//glm::vec3 GetColor() const { return m_Color; }
 		
@@ -40,6 +37,20 @@ namespace ili
 			return ptr;
 		}
 
+		template<typename T>
+		T* GetComponent()
+		{
+			static_assert(std::is_base_of<BaseComponent, T>::value, "T must derive from BaseComponent");
+			for (auto& component : m_pComponents)
+			{
+				if (typeid(*component) == typeid(T))
+				{
+					return static_cast<T*>(component.get());
+				}
+			}
+			return nullptr;
+		}
+
 		unsigned int GetId() const { return m_Id; }
 
 	protected:
@@ -55,8 +66,6 @@ namespace ili
 		TransformComponent* m_pTransformComponent{};
 
 		std::vector<std::unique_ptr<BaseComponent>> m_pComponents{};
-
-		std::shared_ptr<Model> m_Model{};
 
 		unsigned int m_Id{};
 	};
