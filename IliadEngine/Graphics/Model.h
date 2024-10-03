@@ -36,7 +36,6 @@ namespace ili
 
         void Bind(VkCommandBuffer commandBuffer) const;
         void Draw(VkCommandBuffer commandBuffer) const;
-
     private:
         void CreateVertexBuffers(const std::vector<Vertex>& vertices);
         void CreateIndexBuffers(const std::vector<uint32_t>& indices);

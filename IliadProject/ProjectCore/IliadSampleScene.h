@@ -15,4 +15,14 @@ public:
 
 protected:
 	virtual void Update(float deltaTime) override;
+
+private:
+	struct MovingLight
+	{
+		ili::PointLightGameObject* lightComponent;
+		float angle; // Current angle in radians
+		float radius; // Radius of the circular path
+	};
+
+	std::vector<MovingLight> movingLights;
 };

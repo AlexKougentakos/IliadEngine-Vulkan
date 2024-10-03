@@ -46,6 +46,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(tinyobjloader)
 
+# Fetch stb (Single-file public domain libraries)
+FetchContent_Declare(
+    stb
+    GIT_REPOSITORY https://github.com/nothings/stb.git
+    GIT_TAG        master
+)
+FetchContent_MakeAvailable(stb)
+
 # Define the source and asset directories
 set(SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/IliadEngine")
 set(ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Assets")
@@ -87,11 +95,12 @@ add_library(IliadEngine STATIC ${LIB_SOURCES})
 target_include_directories(IliadEngine PUBLIC
     ${Vulkan_INCLUDE_DIRS}
     ${glfw_SOURCE_DIR}/include
-    ${glm_SOURCE_DIR}  # Include GLM headers
+    ${glm_SOURCE_DIR}             # Include GLM headers
     ${imgui_SOURCE_DIR}
     ${imgui_SOURCE_DIR}/backends
-    ${tinyobjloader_SOURCE_DIR}  # Include tinyobjloader headers
-    ${SOURCE_DIR}      # Include IliadEngine directory headers
+    ${tinyobjloader_SOURCE_DIR}   # Include tinyobjloader headers
+    ${stb_SOURCE_DIR}             # Include stb headers
+    ${SOURCE_DIR}                 # Include IliadEngine directory headers
 )
 
 # Link Vulkan, GLFW, ImGui, and tinyobjloader libraries to IliadEngine
@@ -114,11 +123,12 @@ add_executable(IliadProject ${PROJECT_SOURCES})
 target_include_directories(IliadProject PUBLIC
     ${Vulkan_INCLUDE_DIRS}
     ${glfw_SOURCE_DIR}/include
-    ${glm_SOURCE_DIR}  # Include GLM headers
+    ${glm_SOURCE_DIR}             # Include GLM headers
     ${imgui_SOURCE_DIR}
     ${imgui_SOURCE_DIR}/backends
-    ${PROJECT_DIR}     # Include IliadProject directory headers
-    ${SOURCE_DIR}      # Include IliadEngine headers
+    ${stb_SOURCE_DIR}             # Include stb headers
+    ${PROJECT_DIR}                # Include IliadProject directory headers
+    ${SOURCE_DIR}                 # Include IliadEngine headers
 )
 
 # Link IliadProject to IliadEngine, Vulkan, GLFW, and ImGui
