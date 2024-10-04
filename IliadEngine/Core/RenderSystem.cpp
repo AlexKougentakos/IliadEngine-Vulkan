@@ -73,12 +73,13 @@ namespace ili
 		vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, 
 			&frameInfo.globalDescriptorSet, 0, nullptr);
 
-		for (const auto& gameObject : gameObjects)
+		for (auto& gameObject : gameObjects)
 		{
 			const auto modelComponent = gameObject->GetComponent<ModelComponent>();
+
 			if (!modelComponent) continue;
 
-			if (!modelComponent->GetModel()) continue;
+			if (!modelComponent->GetModel() || modelComponent->GetDiffuseMap()) continue;
 
 			SimplePushConstantData pushData{};
 

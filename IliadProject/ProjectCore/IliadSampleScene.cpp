@@ -7,15 +7,23 @@
 void IliadSampleScene::Initialize()
 {
     // Load models
-    const std::shared_ptr<ili::Model> bunnyModel = ili::ContentLoader::GetInstance().LoadModelFromFile("Assets/Models/bunny.obj");
+    const std::shared_ptr<ili::Model> bunnyModel = ili::ContentLoader::GetInstance().LoadModelFromFile("Assets/Models/viking_room.obj");
     const std::shared_ptr<ili::Model> vase = ili::ContentLoader::GetInstance().LoadModelFromFile("Assets/Models/flat_vase.obj");
     const std::shared_ptr<ili::Model> floor = ili::ContentLoader::GetInstance().LoadModelFromFile("Assets/Models/quad.obj");
 
+	auto texture = ili::ContentLoader::GetInstance().LoadTextureFromFile("Assets/Textures/cat.jpg");
+	auto texture2 = ili::ContentLoader::GetInstance().LoadTextureFromFile("Assets/Textures/viking_room.png");
+
+
+    //todo: create the texture here
+
     // Create a single bunny at the center
-    const auto bunny = CreateGameObject<ili::GameObject>();
-    bunny->AddComponent<ili::ModelComponent>()->SetModel(bunnyModel);
+    auto bunny = CreateGameObject<ili::GameObject>();
+    auto modelComponent = bunny->AddComponent<ili::ModelComponent>();
+	modelComponent->SetModel(bunnyModel);
+	modelComponent->SetDiffuseMap(texture2);
     bunny->GetTransform()->position = { 0.f, 0.f, 0.f }; // Center
-    bunny->GetTransform()->rotation = { 0.f, 180.f, 0.f };
+    bunny->GetTransform()->rotation = { glm::radians < float> (90), glm::radians<float>(45), 0.f };
     bunny->GetTransform()->scale = { 2.5f, -2.5f, 2.5f };
 
     // Create static lights with different colors
@@ -44,7 +52,7 @@ void IliadSampleScene::Initialize()
 		movingLights.push_back({ pointLight, angle, radius });
     }
 
-    const auto floorObject = CreateGameObject<ili::GameObject>();
+    auto floorObject = CreateGameObject<ili::GameObject>();
     floorObject->AddComponent<ili::ModelComponent>()->SetModel(floor);
     floorObject->GetTransform()->position = { 0.0f, 0.f, 0.0f };
     floorObject->GetTransform()->rotation = { 0.f, 0.f, 0.f };

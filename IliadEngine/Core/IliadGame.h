@@ -14,6 +14,7 @@
 #include <chrono>
 
 #include "ContentLoader.h"
+#include "Graphics/TextureRenderSystem.h"
 
 
 namespace ili
@@ -56,9 +57,11 @@ namespace ili
 		std::unique_ptr<DescriptorPool> m_GlobalDescriptorPool{};
 		std::vector<std::unique_ptr<ili::Buffer>> m_UboBuffers{ ili::SwapChain::MAX_FRAMES_IN_FLIGHT };
 		std::vector<VkDescriptorSet> m_GlobalDescriptorSets{ ili::SwapChain::MAX_FRAMES_IN_FLIGHT };
+		std::vector<std::unique_ptr<DescriptorPool>> m_FramePools;
 
 		std::optional<RenderSystem> m_RenderSystem{};
 		std::optional<PointLightSystem> m_PointLightSystem{};
+		std::optional<TextureRenderSystem> m_TextureRenderSystem{};
 
 	protected:
 		//These have to be here, due to order of destruction. Items in the scene need to be destroyed before the window, device & renderer

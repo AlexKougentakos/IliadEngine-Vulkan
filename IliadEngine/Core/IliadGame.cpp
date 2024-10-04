@@ -76,7 +76,8 @@ namespace ili
 		if (const auto commandBuffer = m_Renderer->BeginFrame())
 		{
 			const int frameIndex = m_Renderer->GetFrameIndex();
-			const ili::FrameInfo frameInfo{ frameIndex, frameTime, commandBuffer, m_Camera, m_GlobalDescriptorSets[frameIndex] };
+			m_FramePools[frameIndex]->ResetPool();
+			const ili::FrameInfo frameInfo{ frameIndex, frameTime, commandBuffer, m_Camera, m_GlobalDescriptorSets[frameIndex], *m_FramePools[frameIndex]};
 
 			ili::GlobalUbo globalUbo{};
 			globalUbo.projectionMatrix = m_Camera.GetProjection();
@@ -88,6 +89,7 @@ namespace ili
 			m_UboBuffers[frameIndex]->Flush();
 
 			m_Renderer->BeginSwapChainRenderPass(commandBuffer);
+			m_TextureRenderSystem.value().renderGameObjects(frameInfo, m_pCurrentScene->GetGameObjects());
 			m_RenderSystem.value().RenderGameObjects(frameInfo, m_pCurrentScene->GetGameObjects());
 			m_PointLightSystem.value().Render(frameInfo, m_pCurrentScene->GetPointLights());
 			m_Renderer->EndSwapChainRenderPass(commandBuffer);
@@ -117,6 +119,18 @@ namespace ili
 			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, ili::SwapChain::MAX_FRAMES_IN_FLIGHT)
 			.build();
 
+		m_FramePools.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+		const auto framePoolBuilder = DescriptorPool::Builder(*m_Device)
+			.setMaxSets(1000)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000)
+			.setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
+
+		for (int i{}; i < m_FramePools.size(); ++i)
+		{
+			m_FramePools[i] = framePoolBuilder.build();
+		}
+
 		for (int i{}; i < m_UboBuffers.size(); ++i)
 		{
 			m_UboBuffers[i] = std::make_unique<ili::Buffer>(*m_Device, sizeof(ili::GlobalUbo), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, m_Device->Properties.limits.minUniformBufferOffsetAlignment);
@@ -138,5 +152,7 @@ namespace ili
 		m_RenderSystem.emplace(*m_Device, m_Renderer->GetSwapChainRenderPass(), globalSetLayout->GetDescriptorSetLayout());
 
 		m_PointLightSystem.emplace(*m_Device, m_Renderer->GetSwapChainRenderPass(), globalSetLayout->GetDescriptorSetLayout());
+
+		m_TextureRenderSystem.emplace(*m_Device, m_Renderer->GetSwapChainRenderPass(), globalSetLayout->GetDescriptorSetLayout());
 	}
 }

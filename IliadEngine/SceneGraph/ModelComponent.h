@@ -6,6 +6,7 @@
 
 namespace ili
 {
+	class Texture;
 
 	class ModelComponent final : public BaseComponent
 	{
@@ -25,8 +26,11 @@ namespace ili
 		void SetModel(const std::shared_ptr<Model>& pModel) { m_pModel = pModel; }
 		std::shared_ptr<Model> GetModel() const { return m_pModel; }
 
+		void SetDiffuseMap(const std::shared_ptr<Texture>& pDiffuseMap) { m_DiffuseMap = pDiffuseMap; }
+		std::shared_ptr<Texture> GetDiffuseMap() const { return m_DiffuseMap; }
+
 	private:
 		std::shared_ptr<Model> m_pModel{};
-
+		std::shared_ptr<Texture> m_DiffuseMap{};
 	};
 }

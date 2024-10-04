@@ -1,7 +1,7 @@
 ﻿#pragma once
 
-#include "../Graphics/Pipeline.h"
-#include "../Graphics/Device.h"
+#include "Graphics/Pipeline.h"
+#include "Graphics/Device.h"
 #include "SceneGraph/Camera.h"
 #include "SceneGraph/GameObject.h"
 

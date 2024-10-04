@@ -3,6 +3,7 @@
 #include "TransformComponent.h"
 #include "../Graphics/Model.h"
 #include "glm/ext/matrix_transform.hpp"
+#include "Graphics/Texture.h"
 
 namespace ili
 {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Graphics/Buffer.h"
+#include "Graphics/Descriptors.h"
 #include "SceneGraph/Camera.h"
 
 namespace ili
@@ -33,5 +34,6 @@ namespace ili
 		VkCommandBuffer commandBuffer{};
 		Camera& camera;
 		VkDescriptorSet globalDescriptorSet{};
+		DescriptorPool& frameDescriptorPool;
 	};
 }

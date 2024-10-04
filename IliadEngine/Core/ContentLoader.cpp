@@ -110,4 +110,11 @@ namespace ili
 
         return std::make_shared<ili::Model>(*m_pDevice, builder.vertices, builder.indices);
     }
+
+    std::shared_ptr<Texture> ContentLoader::LoadTextureFromFile(const std::string& filepath) const
+    {
+		assert(m_pDevice != nullptr && "Device is not initialized");
+
+		return std::make_shared<Texture>(*m_pDevice, filepath);
+    }
 }

@@ -5,6 +5,9 @@
 #include "Graphics/Device.h"
 #include <memory>
 #include <string>
+
+#include "Graphics/Texture.h"
+
 namespace ili
 {
 
@@ -22,7 +25,8 @@ namespace ili
             m_pDevice = device;
         }
 
-        std::shared_ptr<ili::Model> LoadModelFromFile(const std::string& filepath) const;
+        std::shared_ptr<Model> LoadModelFromFile(const std::string& filepath) const;
+        std::shared_ptr<Texture> LoadTextureFromFile(const std::string& filepath) const;
 
     private:
         friend class Singleton<ContentLoader>;
