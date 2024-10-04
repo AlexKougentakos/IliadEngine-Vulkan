@@ -36,11 +36,12 @@ namespace ili
 		InitializeGame();
 
 		// Set camera view target
-		m_Camera.SetViewTarget({ 0.f, 0.f, 0.f }, { 0.5f, 0.f, 1.f });
+		m_Camera.SetViewTarget({ 0.f, 0.f, 0.f }, { 0.5f, 0.5f, 1.f });
 
 		// Create viewer object
 		const auto viewerObject = m_pCurrentScene->CreateGameObject<GameObject>();
-		viewerObject->GetTransform()->SetPosition({ 0.f, 0.f, -1.f });
+		viewerObject->GetTransform()->SetPosition({ 0.f, -3.f, -5.f });
+		viewerObject->GetTransform()->SetRotationDegrees({ 180.f, 0.f, 0.f });
 
 		// Initialize current time
 		m_CurrentTime = std::chrono::high_resolution_clock::now();
@@ -62,9 +63,40 @@ namespace ili
 		const auto frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - m_CurrentTime).count();
 		m_CurrentTime = newTime;
 
+		//Handle escaping the window
+		const int escapeState = glfwGetKey(m_Window->GetWindow(), GLFW_KEY_ESCAPE);
+		if (escapeState == GLFW_PRESS && !m_EscapePressedLastFrame)
+		{
+			m_IsCursorLocked = !m_IsCursorLocked;
+
+			if (m_IsCursorLocked)
+			{
+				// Capture and hide the cursor
+				glfwSetInputMode(m_Window->GetWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+				// Reset accumulatedRotation to prevent sudden jumps
+				cameraController.ResetMouse();
+				cameraController.SetCursorLocked(true);
+
+				int windowWidth, windowHeight;
+				glfwGetWindowSize(m_Window->GetWindow(), &windowWidth, &windowHeight);
+				glfwSetCursorPos(m_Window->GetWindow(), windowWidth / 2.0, windowHeight / 2.0);
+			}
+			else
+			{
+				// Release and show the cursor
+				glfwSetInputMode(m_Window->GetWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+				cameraController.SetCursorLocked(false);
+			}
+		}
+
+		// Update the last frame's Escape key state
+		m_EscapePressedLastFrame = (escapeState == GLFW_PRESS);
+
 		// Handle input and update GameObject
 		cameraController.MoveInPlaneXZ(m_Window->GetWindow(), frameTime, *viewerObject);
 		m_Camera.SetViewYXZ(viewerObject->GetTransform()->GetPosition(), viewerObject->GetTransform()->GetRotationRadians());
+		//m_Camera.SetViewYXZ(viewerObject->GetTransform()->GetPosition(), {glm::radians<float>(-35), 0.f, 0.f});
 
 		// Update camera projection
 		const float aspectRatio = m_Renderer->GetAspectRatio();

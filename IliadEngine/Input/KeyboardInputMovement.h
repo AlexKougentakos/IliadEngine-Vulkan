@@ -24,6 +24,8 @@ namespace ili
         };
 
         void MoveInPlaneXZ(GLFWwindow* window, const float deltaTime, GameObject& gameObject);
+        void SetCursorLocked(bool isLocked);
+        void ResetMouse();
 
         KeyMappings keys{};
         float movementSpeed = 3.0f;
@@ -36,5 +38,7 @@ namespace ili
         double lastMouseY = 0.0;
         float mouseSensitivity = 0.1f;
         glm::vec3 accumulatedRotation = glm::vec3(0.0f);
+
+        bool m_IsCursorLocked{ true };
     };
 }

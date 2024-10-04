@@ -69,6 +69,9 @@ namespace ili
 
 		// **Added Member Variable for Keyboard and Mouse Input**
 		KeyboardMovementController m_CameraController{};
+
+		bool m_IsCursorLocked = true;
+		bool m_EscapePressedLastFrame = false;
 	};
 
 }

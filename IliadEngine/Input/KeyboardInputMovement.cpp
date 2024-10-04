@@ -16,36 +16,40 @@ namespace ili {
 		if (glfwGetKey(window, keys.lookUp) == GLFW_PRESS) rotation.x += 1;
 		if (glfwGetKey(window, keys.lookDown) == GLFW_PRESS) rotation.x -= 1;
 
-		// Handle Mouse Rotation Inputs
-		double currentMouseX, currentMouseY;
-		glfwGetCursorPos(window, &currentMouseX, &currentMouseY);
-
-		if (firstMouse)
+		if (m_IsCursorLocked)
 		{
+
+			// Handle Mouse Rotation Inputs
+			double currentMouseX, currentMouseY;
+			glfwGetCursorPos(window, &currentMouseX, &currentMouseY);
+
+			if (firstMouse)
+			{
+				lastMouseX = currentMouseX;
+				lastMouseY = currentMouseY;
+				firstMouse = false;
+			}
+
+			double deltaMouseX = currentMouseX - lastMouseX;
+			double deltaMouseY = currentMouseY - lastMouseY;
+
 			lastMouseX = currentMouseX;
 			lastMouseY = currentMouseY;
-			firstMouse = false;
+
+			// **Inverted Y-axis Mouse Movement**
+			rotation.y += static_cast<float>(deltaMouseX) * mouseSensitivity;
+			rotation.x -= static_cast<float>(deltaMouseY) * mouseSensitivity; // Invert Y-axis
+
+			// Accumulate Rotation with deltaTime Scaling
+			accumulatedRotation.x += rotation.x * deltaTime;
+			accumulatedRotation.x = glm::clamp(accumulatedRotation.x, -1.5f, 1.5f); // Clamp Pitch to prevent flipping
+
+			accumulatedRotation.y += rotation.y * deltaTime;
+			accumulatedRotation.y = glm::mod(accumulatedRotation.y, glm::two_pi<float>()); // Wrap Yaw within [0, 2π)
+
+			// Update GameObject's Rotation
+			gameObject.GetTransform()->SetRotationRadians(accumulatedRotation);
 		}
-
-		double deltaMouseX = currentMouseX - lastMouseX;
-		double deltaMouseY = currentMouseY - lastMouseY;
-
-		lastMouseX = currentMouseX;
-		lastMouseY = currentMouseY;
-
-		// **Inverted Y-axis Mouse Movement**
-		rotation.y += static_cast<float>(deltaMouseX) * mouseSensitivity;
-		rotation.x -= static_cast<float>(deltaMouseY) * mouseSensitivity; // Invert Y-axis
-
-		// Accumulate Rotation with deltaTime Scaling
-		accumulatedRotation.x += rotation.x * deltaTime;
-		accumulatedRotation.x = glm::clamp(accumulatedRotation.x, -1.5f, 1.5f); // Clamp Pitch to prevent flipping
-
-		accumulatedRotation.y += rotation.y * deltaTime;
-		accumulatedRotation.y = glm::mod(accumulatedRotation.y, glm::two_pi<float>()); // Wrap Yaw within [0, 2π)
-
-		// Update GameObject's Rotation
-		gameObject.GetTransform()->SetRotationRadians(accumulatedRotation);
 
 		// **Calculate Directional Vectors Based on Updated Pitch and Yaw**
 		const float pitch = accumulatedRotation.x;
@@ -82,5 +86,23 @@ namespace ili {
 		}
 	}
 
+	void KeyboardMovementController::SetCursorLocked(bool isLocked)
+	{
+		m_IsCursorLocked = isLocked;
 
-} // namespace ili
+		if (!m_IsCursorLocked)
+		{
+			// Reset firstMouse to prevent sudden jumps when re-locking
+			firstMouse = true;
+		}
+	}
+
+	void KeyboardMovementController::ResetMouse()
+	{
+		// Reset mouse tracking variables
+		firstMouse = true;
+		lastMouseX = 0.0;
+		lastMouseY = 0.0;
+	}
+
+}
