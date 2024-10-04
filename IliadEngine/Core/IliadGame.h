@@ -10,12 +10,10 @@
 #include "Core/RenderSystem.h"
 #include "Core/PointLightSystem.h"
 
-
 #include <chrono>
 
 #include "ContentLoader.h"
 #include "Graphics/TextureRenderSystem.h"
-
 
 namespace ili
 {
@@ -33,41 +31,44 @@ namespace ili
 		void Run();
 
 	protected:
-		//Called before all the initializations, in case it is ever needed
+		// Called before all the initializations, in case it is ever needed
 		virtual void OnGamePreparing() = 0;
 		virtual void InitializeGame() = 0;
-		void GameLoop(GameObject* viewerObject, KeyboardMovementController cameraController);
+		void GameLoop(GameObject* viewerObject, KeyboardMovementController& cameraController);
 
-		//todo: make this private again. Aka hide the device, window and renderer from the user
-	//private:
+		// Initialization methods
 		void InitializeWindow();
 		void InitializeVulkan();
 
+		// Member variables
 		std::unique_ptr<Window> m_Window{};
 		std::unique_ptr<Device> m_Device{};
 		std::unique_ptr<Renderer> m_Renderer{};
 
-		//todo: remove this from here
+		// Camera setup
 		Camera m_Camera{};
 
-		//Timing Stuff
+		// Timing
 		std::chrono::steady_clock::time_point m_CurrentTime{};
 
-		//Vulkan stuff
+		// Vulkan resources
 		std::unique_ptr<DescriptorPool> m_GlobalDescriptorPool{};
 		std::vector<std::unique_ptr<ili::Buffer>> m_UboBuffers{ ili::SwapChain::MAX_FRAMES_IN_FLIGHT };
 		std::vector<VkDescriptorSet> m_GlobalDescriptorSets{ ili::SwapChain::MAX_FRAMES_IN_FLIGHT };
 		std::vector<std::unique_ptr<DescriptorPool>> m_FramePools;
 
+		// Rendering systems
 		std::optional<RenderSystem> m_RenderSystem{};
 		std::optional<PointLightSystem> m_PointLightSystem{};
 		std::optional<TextureRenderSystem> m_TextureRenderSystem{};
 
 	protected:
-		//These have to be here, due to order of destruction. Items in the scene need to be destroyed before the window, device & renderer
-		//I can also just make them all pointers and manage their destruction order.
+		// Scene management
 		SceneManager m_SceneManager{};
 		Scene* m_pCurrentScene{ nullptr };
 
+		// **Added Member Variable for Keyboard and Mouse Input**
+		KeyboardMovementController m_CameraController{};
 	};
+
 }

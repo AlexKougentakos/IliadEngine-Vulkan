@@ -1,35 +1,86 @@
-#include "KeyboardInputMovement.h"
+﻿#include "KeyboardInputMovement.h"
+#include <glm/gtc/constants.hpp>
+#include <limits>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/rotate_vector.hpp> // For rotation transformations
 
-#include "SceneGraph/TransformComponent.h"
+namespace ili {
 
-void ili::KeyboardMovementController::MoveInPlaneXZ(GLFWwindow* window, const float deltaTime, GameObject& gameObject)
-{
-	glm::vec3 rotation{};
-	if (glfwGetKey(window, keys.lookLeft) == GLFW_PRESS) rotation.y -= 1;
-	if (glfwGetKey(window, keys.lookRight) == GLFW_PRESS) rotation.y += 1;
-	if (glfwGetKey(window, keys.lookUp) == GLFW_PRESS) rotation.x += 1;
-	if (glfwGetKey(window, keys.lookDown) == GLFW_PRESS) rotation.x -= 1;
+	void KeyboardMovementController::MoveInPlaneXZ(GLFWwindow* window, const float deltaTime, GameObject& gameObject)
+	{
+		glm::vec3 rotation{};
 
-	// Make sure that the rotation is not zero, because if you normalize a zero vector, it will result in a NaN
-	if (glm::dot(rotation, rotation) > std::numeric_limits<float>::epsilon())
-		gameObject.GetTransform()->rotation += turnSpeed * glm::normalize(rotation) * deltaTime;
+		// Handle Keyboard Rotation Inputs
+		if (glfwGetKey(window, keys.lookLeft) == GLFW_PRESS) rotation.y -= 1;
+		if (glfwGetKey(window, keys.lookRight) == GLFW_PRESS) rotation.y += 1;
+		if (glfwGetKey(window, keys.lookUp) == GLFW_PRESS) rotation.x += 1;
+		if (glfwGetKey(window, keys.lookDown) == GLFW_PRESS) rotation.x -= 1;
 
-	gameObject.GetTransform()->rotation.x = glm::clamp(gameObject.GetTransform()->rotation.x, -1.5f, 1.5f);
-	gameObject.GetTransform()->rotation.y = glm::mod(gameObject.GetTransform()->rotation.y, glm::two_pi<float>());
+		// Handle Mouse Rotation Inputs
+		double currentMouseX, currentMouseY;
+		glfwGetCursorPos(window, &currentMouseX, &currentMouseY);
 
-	const float yaw = gameObject.GetTransform()->rotation.y;
-	const glm::vec3 forward{ sin(yaw), 0, cos(yaw) };
-	const glm::vec3 right{ forward.z, 0, -forward.x };
-	constexpr glm::vec3 up{ 0, -1.f, 0 };
+		if (firstMouse)
+		{
+			lastMouseX = currentMouseX;
+			lastMouseY = currentMouseY;
+			firstMouse = false;
+		}
 
-	glm::vec3 moveDirection{};
-	if (glfwGetKey(window, keys.moveForward) == GLFW_PRESS) moveDirection += forward;
-	if (glfwGetKey(window, keys.moveBackward) == GLFW_PRESS) moveDirection -= forward;
-	if (glfwGetKey(window, keys.moveRight) == GLFW_PRESS) moveDirection += right;
-	if (glfwGetKey(window, keys.moveLeft) == GLFW_PRESS) moveDirection -= right;
-	if (glfwGetKey(window, keys.moveUp) == GLFW_PRESS) moveDirection += up;
-	if (glfwGetKey(window, keys.moveDown) == GLFW_PRESS) moveDirection -= up;
+		double deltaMouseX = currentMouseX - lastMouseX;
+		double deltaMouseY = currentMouseY - lastMouseY;
 
-	if (glm::dot(moveDirection, moveDirection) > std::numeric_limits<float>::epsilon())
-		gameObject.GetTransform()->position += movementSpeed * glm::normalize(moveDirection) * deltaTime;
-}
+		lastMouseX = currentMouseX;
+		lastMouseY = currentMouseY;
+
+		// **Inverted Y-axis Mouse Movement**
+		rotation.y += static_cast<float>(deltaMouseX) * mouseSensitivity;
+		rotation.x -= static_cast<float>(deltaMouseY) * mouseSensitivity; // Invert Y-axis
+
+		// Accumulate Rotation with deltaTime Scaling
+		accumulatedRotation.x += rotation.x * deltaTime;
+		accumulatedRotation.x = glm::clamp(accumulatedRotation.x, -1.5f, 1.5f); // Clamp Pitch to prevent flipping
+
+		accumulatedRotation.y += rotation.y * deltaTime;
+		accumulatedRotation.y = glm::mod(accumulatedRotation.y, glm::two_pi<float>()); // Wrap Yaw within [0, 2π)
+
+		// Update GameObject's Rotation
+		gameObject.GetTransform()->SetRotationRadians(accumulatedRotation);
+
+		// **Calculate Directional Vectors Based on Updated Pitch and Yaw**
+		const float pitch = accumulatedRotation.x;
+		const float yaw = accumulatedRotation.y;
+
+		// Calculate forward vector including pitch
+		glm::vec3 forward;
+		forward.x = cos(pitch) * sin(yaw);
+		forward.y = -sin(pitch); // Inverted Y-component
+		forward.z = cos(pitch) * cos(yaw);
+		forward = glm::normalize(forward);
+
+		// Calculate right vector as cross product of forward and world up
+		glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0.0f, 1.0f, 0.0f)));
+
+		// Recalculate up vector as cross product of right and forward
+		glm::vec3 up = glm::normalize(glm::cross(right, forward));
+
+		// Handle Movement Inputs Relative to Camera's Orientation
+		glm::vec3 moveDirection{};
+
+		if (glfwGetKey(window, keys.moveForward) == GLFW_PRESS) moveDirection += forward;
+		if (glfwGetKey(window, keys.moveBackward) == GLFW_PRESS) moveDirection -= forward;
+		if (glfwGetKey(window, keys.moveRight) == GLFW_PRESS) moveDirection -= right;
+		if (glfwGetKey(window, keys.moveLeft) == GLFW_PRESS) moveDirection += right;
+		if (glfwGetKey(window, keys.moveUp) == GLFW_PRESS) moveDirection += up;
+		if (glfwGetKey(window, keys.moveDown) == GLFW_PRESS) moveDirection -= up;
+
+		if (glm::length(moveDirection) > std::numeric_limits<float>::epsilon())
+		{
+			glm::vec3 normalizedMoveDirection = glm::normalize(moveDirection);
+			glm::vec3 movementDelta = movementSpeed * normalizedMoveDirection * deltaTime;
+			gameObject.GetTransform()->SetPosition(gameObject.GetTransform()->GetPosition() + movementDelta);
+		}
+	}
+
+
+} // namespace ili

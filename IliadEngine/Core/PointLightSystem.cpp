@@ -76,7 +76,7 @@ namespace ili
 		int lightIndex{};
 		for (auto& pointLight : pointLights)
 		{
-			ubo.pointLights[lightIndex].position = glm::vec4(pointLight->GetTransform()->position, 1.f);
+			ubo.pointLights[lightIndex].position = glm::vec4(pointLight->GetTransform()->GetPosition(), 1.f);
 			ubo.pointLights[lightIndex].color = glm::vec4(pointLight->GetColor(), pointLight->GetIntensity());
 
 			lightIndex++;
@@ -95,7 +95,7 @@ namespace ili
 		for (auto& pointLight : pointLights)
 		{
 			PointLightPushConstants pushConstants{};
-			pushConstants.position = glm::vec4(pointLight->GetTransform()->position, 1.f);
+			pushConstants.position = glm::vec4(pointLight->GetTransform()->GetPosition(), 1.f);
 			pushConstants.color = glm::vec4(pointLight->GetColor(), pointLight->GetIntensity());
 			pushConstants.radius = pointLight->GetRadius();
 

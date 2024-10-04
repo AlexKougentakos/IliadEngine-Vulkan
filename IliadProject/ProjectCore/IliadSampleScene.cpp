@@ -22,9 +22,9 @@ void IliadSampleScene::Initialize()
     auto modelComponent = bunny->AddComponent<ili::ModelComponent>();
 	modelComponent->SetModel(bunnyModel);
 	modelComponent->SetDiffuseMap(texture2);
-    bunny->GetTransform()->position = { 0.f, 0.f, 0.f }; // Center
-    bunny->GetTransform()->rotation = { glm::radians < float> (90), glm::radians<float>(45), 0.f };
-    bunny->GetTransform()->scale = { 2.5f, -2.5f, 2.5f };
+    bunny->GetTransform()->SetPosition({ 0.f, 0.f, 0.f }); // Center
+    bunny->GetTransform()->SetRotationDegrees({ 90.f, 45.f, 0.f });
+    bunny->GetTransform()->SetScale({ 2.5f, -2.5f, 2.5f });
 
     // Create static lights with different colors
     const std::vector<glm::vec3> lightColors = 
@@ -43,20 +43,18 @@ void IliadSampleScene::Initialize()
         // Position lights around the bunny in a circle on the ground
         const float angle = static_cast<float>(i) / lightColors.size() * 2.0f * glm::pi<float>();
         constexpr  float radius = 1.0f; // Distance from the bunny
-        pointLight->GetTransform()->position = {
+        pointLight->GetTransform()->SetPosition({
             radius * std::cos(angle),
             -1.0f, // Slightly above ground
             radius * std::sin(angle)
-        };
+            });
         pointLight->SetColor(lightColors[i]);
 		movingLights.push_back({ pointLight, angle, radius });
     }
 
     auto floorObject = CreateGameObject<ili::GameObject>();
     floorObject->AddComponent<ili::ModelComponent>()->SetModel(floor);
-    floorObject->GetTransform()->position = { 0.0f, 0.f, 0.0f };
-    floorObject->GetTransform()->rotation = { 0.f, 0.f, 0.f };
-    floorObject->GetTransform()->scale = { 5.f, 1.f, 5.f };
+    floorObject->GetTransform()->SetScale({ 5.f, 1.f, 5.f });
 }
 
 void IliadSampleScene::Update(float deltaTime)
@@ -72,6 +70,6 @@ void IliadSampleScene::Update(float deltaTime)
         // Calculate new position
         float x = ml.radius * std::cos(ml.angle);
         float z = ml.radius * std::sin(ml.angle);
-        ml.lightComponent->GetTransform()->position = { x, -1.f, z };
+        ml.lightComponent->GetTransform()->SetPosition({ x, -1.f, z });
     }
 }
