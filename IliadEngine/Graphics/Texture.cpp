@@ -1,69 +1,89 @@
 ﻿#include "Texture.h"
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+
 // std
 #include <cmath>
 #include <stdexcept>
+
 namespace ili
 {
-    Texture::Texture(Device& device, const std::string& textureFilepath) : mDevice{ device } {
-        createTextureImage(textureFilepath);
-        createTextureImageView(VK_IMAGE_VIEW_TYPE_2D);
-        createTextureSampler();
-        updateDescriptor();
+    Texture::Texture(Device& device, const std::string& textureFilepath)
+        : m_Device{ device }
+    {
+        CreateTextureImage(textureFilepath);
+        CreateTextureImageView(VK_IMAGE_VIEW_TYPE_2D);
+        CreateTextureSampler();
+        UpdateDescriptor();
     }
+
     Texture::Texture(
         Device& device,
         VkFormat format,
         VkExtent3D extent,
         VkImageUsageFlags usage,
         VkSampleCountFlagBits sampleCount)
-        : mDevice{ device } {
+        : m_Device{ device },
+        m_Format{ format },
+        m_Extent{ extent },
+        m_MipLevels{ 1 },
+        m_LayerCount{ 1 }
+    {
         VkImageAspectFlags aspectMask = 0;
         VkImageLayout imageLayout;
-        mFormat = format;
-        mExtent = extent;
-        if (usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) {
+
+        if (usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+        {
             aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         }
-        if (usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) {
+
+        if (usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+        {
             aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
             imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
         }
+
         // Don't like this, should I be using an image array instead of multiple images?
         VkImageCreateInfo imageInfo{};
         imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         imageInfo.imageType = VK_IMAGE_TYPE_2D;
-        imageInfo.format = format;
-        imageInfo.extent = extent;
-        imageInfo.mipLevels = 1;
-        imageInfo.arrayLayers = 1;
+        imageInfo.format = m_Format;
+        imageInfo.extent = m_Extent;
+        imageInfo.mipLevels = m_MipLevels;
+        imageInfo.arrayLayers = m_LayerCount;
         imageInfo.samples = sampleCount;
         imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
         imageInfo.usage = usage;
         imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        device.CreateImageWithInfo(
+
+        m_Device.CreateImageWithInfo(
             imageInfo,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            mTextureImage,
-            mTextureImageMemory);
+            m_pTextureImage,
+            m_pTextureImageMemory);
+
         VkImageViewCreateInfo viewInfo{};
         viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        viewInfo.format = format;
+        viewInfo.format = m_Format;
         viewInfo.subresourceRange = {};
         viewInfo.subresourceRange.aspectMask = aspectMask;
         viewInfo.subresourceRange.baseMipLevel = 0;
         viewInfo.subresourceRange.levelCount = 1;
         viewInfo.subresourceRange.baseArrayLayer = 0;
         viewInfo.subresourceRange.layerCount = 1;
-        viewInfo.image = mTextureImage;
-        if (vkCreateImageView(device.GetDevice(), &viewInfo, nullptr, &mTextureImageView) != VK_SUCCESS) {
+        viewInfo.image = m_pTextureImage;
+
+        if (vkCreateImageView(m_Device.GetDevice(), &viewInfo, nullptr, &m_pTextureImageView) != VK_SUCCESS)
+        {
             throw std::runtime_error("failed to create texture image view!");
         }
-        // Sampler should be seperated out
-        if (usage & VK_IMAGE_USAGE_SAMPLED_BIT) {
+
+        // Sampler should be separated out
+        if (usage & VK_IMAGE_USAGE_SAMPLED_BIT)
+        {
             // Create sampler to sample from the attachment in the fragment shader
             VkSamplerCreateInfo samplerInfo{};
             samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -78,119 +98,150 @@ namespace ili
             samplerInfo.minLod = 0.0f;
             samplerInfo.maxLod = 1.0f;
             samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
-            if (vkCreateSampler(device.GetDevice(), &samplerInfo, nullptr, &mTextureSampler) != VK_SUCCESS) {
+
+            if (vkCreateSampler(m_Device.GetDevice(), &samplerInfo, nullptr, &m_pTextureSampler) != VK_SUCCESS)
+            {
                 throw std::runtime_error("failed to create sampler!");
             }
+
             VkImageLayout samplerImageLayout = imageLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
                 ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
                 : VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-            mDescriptor.sampler = mTextureSampler;
-            mDescriptor.imageView = mTextureImageView;
-            mDescriptor.imageLayout = samplerImageLayout;
+
+            m_Descriptor.sampler = m_pTextureSampler;
+            m_Descriptor.imageView = m_pTextureImageView;
+            m_Descriptor.imageLayout = samplerImageLayout;
         }
     }
-    Texture::~Texture() {
-        vkDestroySampler(mDevice.GetDevice(), mTextureSampler, nullptr);
-        vkDestroyImageView(mDevice.GetDevice(), mTextureImageView, nullptr);
-        vkDestroyImage(mDevice.GetDevice(), mTextureImage, nullptr);
-        vkFreeMemory(mDevice.GetDevice(), mTextureImageMemory, nullptr);
+
+    Texture::~Texture()
+    {
+        vkDestroySampler(m_Device.GetDevice(), m_pTextureSampler, nullptr);
+        vkDestroyImageView(m_Device.GetDevice(), m_pTextureImageView, nullptr);
+        vkDestroyImage(m_Device.GetDevice(), m_pTextureImage, nullptr);
+        vkFreeMemory(m_Device.GetDevice(), m_pTextureImageMemory, nullptr);
     }
-    std::unique_ptr<Texture> Texture::createTextureFromFile(
-        Device& device, const std::string& filepath) {
+
+    std::unique_ptr<Texture> Texture::CreateTextureFromFile(
+        Device& device, const std::string& filepath)
+    {
         return std::make_unique<Texture>(device, filepath);
     }
-    void Texture::updateDescriptor() {
-        mDescriptor.sampler = mTextureSampler;
-        mDescriptor.imageView = mTextureImageView;
-        mDescriptor.imageLayout = mTextureLayout;
+
+    void Texture::UpdateDescriptor()
+    {
+        m_Descriptor.sampler = m_pTextureSampler;
+        m_Descriptor.imageView = m_pTextureImageView;
+        m_Descriptor.imageLayout = m_TextureLayout;
     }
-    void Texture::createTextureImage(const std::string& filepath) {
+
+    void Texture::CreateTextureImage(const std::string& filepath)
+    {
         int texWidth, texHeight, texChannels;
         // stbi_set_flip_vertically_on_load(1);  // todo determine why texture coordinates are flipped
         stbi_uc* pixels =
             stbi_load(filepath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         VkDeviceSize imageSize = texWidth * texHeight * 4;
-        if (!pixels) {
+        if (!pixels)
+        {
             throw std::runtime_error("failed to load texture image!");
         }
+
         // mMipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
-        mMipLevels = 1;
+        m_MipLevels = 1;
+
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
-        mDevice.CreateBuffer(
+
+        m_Device.CreateBuffer(
             imageSize,
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
             stagingBuffer,
             stagingBufferMemory);
+
         void* data;
-        vkMapMemory(mDevice.GetDevice(), stagingBufferMemory, 0, imageSize, 0, &data);
+        vkMapMemory(m_Device.GetDevice(), stagingBufferMemory, 0, imageSize, 0, &data);
         memcpy(data, pixels, static_cast<size_t>(imageSize));
-        vkUnmapMemory(mDevice.GetDevice(), stagingBufferMemory);
+        vkUnmapMemory(m_Device.GetDevice(), stagingBufferMemory);
         stbi_image_free(pixels);
-        mFormat = VK_FORMAT_R8G8B8A8_SRGB;
-        mExtent = { static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1 };
+
+        m_Format = VK_FORMAT_R8G8B8A8_SRGB;
+        m_Extent = { static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1 };
+
         VkImageCreateInfo imageInfo{};
         imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         imageInfo.imageType = VK_IMAGE_TYPE_2D;
-        imageInfo.extent = mExtent;
-        imageInfo.mipLevels = mMipLevels;
-        imageInfo.arrayLayers = mLayerCount;
-        imageInfo.format = mFormat;
+        imageInfo.extent = m_Extent;
+        imageInfo.mipLevels = m_MipLevels;
+        imageInfo.arrayLayers = m_LayerCount;
+        imageInfo.format = m_Format;
         imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
         imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
             VK_IMAGE_USAGE_SAMPLED_BIT;
         imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
         imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        mDevice.CreateImageWithInfo(
+
+        m_Device.CreateImageWithInfo(
             imageInfo,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            mTextureImage,
-            mTextureImageMemory);
-        mDevice.transitionImageLayout(
-            mTextureImage,
+            m_pTextureImage,
+            m_pTextureImageMemory);
+
+        m_Device.TransitionImageLayout(
+            m_pTextureImage,
             VK_FORMAT_R8G8B8A8_SRGB,
             VK_IMAGE_LAYOUT_UNDEFINED,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            mMipLevels,
-            mLayerCount);
-        mDevice.CopyBufferToImage(
+            m_MipLevels,
+            m_LayerCount);
+
+        m_Device.CopyBufferToImage(
             stagingBuffer,
-            mTextureImage,
+            m_pTextureImage,
             static_cast<uint32_t>(texWidth),
             static_cast<uint32_t>(texHeight),
-            mLayerCount);
-        // comment this out if using mips
-        mDevice.transitionImageLayout(
-            mTextureImage,
+            m_LayerCount);
+
+        // Comment this out if using mips
+        m_Device.TransitionImageLayout(
+            m_pTextureImage,
             VK_FORMAT_R8G8B8A8_SRGB,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            mMipLevels,
-            mLayerCount);
-        // If we generate mip maps then the final image will alerady be READ_ONLY_OPTIMAL
-        // mDevice.generateMipmaps(mTextureImage, mFormat, texWidth, texHeight, mMipLevels);
-        mTextureLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        vkDestroyBuffer(mDevice.GetDevice(), stagingBuffer, nullptr);
-        vkFreeMemory(mDevice.GetDevice(), stagingBufferMemory, nullptr);
+            m_MipLevels,
+            m_LayerCount);
+
+        // If we generate mip maps then the final image will already be READ_ONLY_OPTIMAL
+        // m_Device.GenerateMipmaps(m_pTextureImage, m_Format, texWidth, texHeight, m_MipLevels);
+        m_TextureLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+        vkDestroyBuffer(m_Device.GetDevice(), stagingBuffer, nullptr);
+        vkFreeMemory(m_Device.GetDevice(), stagingBufferMemory, nullptr);
     }
-    void Texture::createTextureImageView(VkImageViewType viewType) {
+
+    void Texture::CreateTextureImageView(VkImageViewType viewType)
+    {
         VkImageViewCreateInfo viewInfo{};
         viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        viewInfo.image = mTextureImage;
+        viewInfo.image = m_pTextureImage;
         viewInfo.viewType = viewType;
         viewInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
         viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         viewInfo.subresourceRange.baseMipLevel = 0;
-        viewInfo.subresourceRange.levelCount = mMipLevels;
+        viewInfo.subresourceRange.levelCount = m_MipLevels;
         viewInfo.subresourceRange.baseArrayLayer = 0;
-        viewInfo.subresourceRange.layerCount = mLayerCount;
-        if (vkCreateImageView(mDevice.GetDevice(), &viewInfo, nullptr, &mTextureImageView) != VK_SUCCESS) {
+        viewInfo.subresourceRange.layerCount = m_LayerCount;
+
+        if (vkCreateImageView(m_Device.GetDevice(), &viewInfo, nullptr, &m_pTextureImageView) != VK_SUCCESS)
+        {
             throw std::runtime_error("failed to create texture image view!");
         }
     }
-    void Texture::createTextureSampler() {
+
+    void Texture::CreateTextureSampler()
+    {
         VkSamplerCreateInfo samplerInfo{};
         samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
         samplerInfo.magFilter = VK_FILTER_LINEAR;
@@ -204,49 +255,62 @@ namespace ili
         samplerInfo.unnormalizedCoordinates = VK_FALSE;
         samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
         samplerInfo.unnormalizedCoordinates = VK_FALSE;
-        // this fields useful for percentage close filtering for shadow maps
+
+        // These fields are useful for percentage closer filtering for shadow maps
         samplerInfo.compareEnable = VK_FALSE;
         samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
         samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
         samplerInfo.mipLodBias = 0.0f;
         samplerInfo.minLod = 0.0f;
-        samplerInfo.maxLod = static_cast<float>(mMipLevels);
-        if (vkCreateSampler(mDevice.GetDevice(), &samplerInfo, nullptr, &mTextureSampler) != VK_SUCCESS) {
+        samplerInfo.maxLod = static_cast<float>(m_MipLevels);
+
+        if (vkCreateSampler(m_Device.GetDevice(), &samplerInfo, nullptr, &m_pTextureSampler) != VK_SUCCESS)
+        {
             throw std::runtime_error("failed to create texture sampler!");
         }
     }
-    void Texture::transitionLayout(
-        VkCommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout) {
+
+    void Texture::TransitionLayout(
+        VkCommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout)
+    {
         VkImageMemoryBarrier barrier{};
         barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
         barrier.oldLayout = oldLayout;
         barrier.newLayout = newLayout;
         barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.image = mTextureImage;
+        barrier.image = m_pTextureImage;
         barrier.subresourceRange.baseMipLevel = 0;
-        barrier.subresourceRange.levelCount = mMipLevels;
+        barrier.subresourceRange.levelCount = m_MipLevels;
         barrier.subresourceRange.baseArrayLayer = 0;
-        barrier.subresourceRange.layerCount = mLayerCount;
-        if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+        barrier.subresourceRange.layerCount = m_LayerCount;
+
+        if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+        {
             barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-            if (mFormat == VK_FORMAT_D32_SFLOAT_S8_UINT || mFormat == VK_FORMAT_D24_UNORM_S8_UINT) {
+            if (m_Format == VK_FORMAT_D32_SFLOAT_S8_UINT || m_Format == VK_FORMAT_D24_UNORM_S8_UINT)
+            {
                 barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
             }
         }
-        else {
+        else
+        {
             barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         }
+
         VkPipelineStageFlags sourceStage;
         VkPipelineStageFlags destinationStage;
-        if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+
+        if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+        {
             barrier.srcAccessMask = 0;
             barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
             sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
             destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
         }
         else if (
-            oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) {
+            oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
+        {
             barrier.srcAccessMask = 0;
             barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
             sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
@@ -254,7 +318,8 @@ namespace ili
         }
         else if (
             oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
-            newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+            newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+        {
             barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
             barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
             sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
@@ -262,7 +327,8 @@ namespace ili
         }
         else if (
             oldLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
-            newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+            newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+        {
             barrier.srcAccessMask = 0;
             barrier.dstAccessMask =
                 VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
@@ -271,9 +337,10 @@ namespace ili
         }
         else if (
             oldLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL &&
-            newLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
-            // This says that any cmd that acts in color output or after (dstStage)
-            // that needs read or write access to a resource
+            newLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+        {
+            // This ensures that any commands acting on color output or after (dstStage)
+            // that need read or write access to a resource
             // must wait until all previous read accesses in fragment shader
             barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
             barrier.dstAccessMask =
@@ -281,9 +348,11 @@ namespace ili
             sourceStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
             destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         }
-        else {
+        else
+        {
             throw std::invalid_argument("unsupported layout transition!");
         }
+
         vkCmdPipelineBarrier(
             commandBuffer,
             sourceStage,

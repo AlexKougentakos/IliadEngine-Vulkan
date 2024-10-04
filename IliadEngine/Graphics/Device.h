@@ -66,8 +66,7 @@ namespace ili
         VkCommandBuffer BeginSingleTimeCommands();
         void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
         void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-        void CopyBufferToImage(
-            VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount);
+        void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount);
 
         void CreateImageWithInfo(
             const VkImageCreateInfo& imageInfo,
@@ -75,7 +74,7 @@ namespace ili
             VkImage& image,
             VkDeviceMemory& imageMemory);
 
-        void transitionImageLayout(
+        void TransitionImageLayout(
             VkImage image,
             VkFormat format,
             VkImageLayout oldLayout,

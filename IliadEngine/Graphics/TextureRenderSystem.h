@@ -17,13 +17,13 @@ namespace ili
         ~TextureRenderSystem();
         TextureRenderSystem(const TextureRenderSystem&) = delete;
         TextureRenderSystem& operator=(const TextureRenderSystem&) = delete;
-        void renderGameObjects(const FrameInfo& frameInfo, const std::vector<std::unique_ptr<GameObject>>& gameObjects);
+        void RenderGameObjects(const FrameInfo& frameInfo, const std::vector<std::unique_ptr<GameObject>>& gameObjects);
     private:
-        void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
-        void createPipeline(VkRenderPass renderPass);
-        Device& lveDevice;
-        std::unique_ptr<Pipeline> lvePipeline;
-        VkPipelineLayout pipelineLayout;
-        std::unique_ptr<DescriptorSetLayout> renderSystemLayout;
+        void CreatePipelineLayout(VkDescriptorSetLayout globalSetLayout);
+        void CreatePipeline(VkRenderPass renderPass);
+        Device& m_Device;
+        std::unique_ptr<Pipeline> m_pPipeline{};
+        VkPipelineLayout m_PipelineLayout{};
+        std::unique_ptr<DescriptorSetLayout> m_RenderSystemLayout;
     };
 }

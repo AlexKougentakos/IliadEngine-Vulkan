@@ -5,9 +5,11 @@
 // std
 #include <memory>
 #include <string>
-namespace ili 
+
+namespace ili
 {
-    class Texture {
+    class Texture 
+    {
     public:
         Texture(Device& device, const std::string& textureFilepath);
         Texture(
@@ -17,36 +19,44 @@ namespace ili
             VkImageUsageFlags usage,
             VkSampleCountFlagBits sampleCount);
         ~Texture();
-        // delete copy constructors
+
+        // Delete copy constructor and copy assignment
         Texture(const Texture&) = delete;
         Texture& operator=(const Texture&) = delete;
-        VkImageView imageView() const { return mTextureImageView; }
-        VkSampler sampler() const { return mTextureSampler; }
-        VkImage getImage() const { return mTextureImage; }
-        VkImageView getImageView() const { return mTextureImageView; }
-        VkDescriptorImageInfo getImageInfo() const { return mDescriptor; }
-        VkImageLayout getImageLayout() const { return mTextureLayout; }
-        VkExtent3D getExtent() const { return mExtent; }
-        VkFormat getFormat() const { return mFormat; }
-        void updateDescriptor();
-        void transitionLayout(
+
+        // Accessor functions with uppercase first letters
+        VkImageView ImageView() const { return m_pTextureImageView; }
+        VkSampler Sampler() const { return m_pTextureSampler; }
+        VkImage GetImage() const { return m_pTextureImage; }
+        VkImageView GetImageView() const { return m_pTextureImageView; }
+        VkDescriptorImageInfo GetImageInfo() const { return m_Descriptor; }
+        VkImageLayout GetImageLayout() const { return m_TextureLayout; }
+        VkExtent3D GetExtent() const { return m_Extent; }
+        VkFormat GetFormat() const { return m_Format; }
+
+        // Member functions with uppercase first letters and brace on next line
+        void UpdateDescriptor();
+        void TransitionLayout(
             VkCommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout);
-        static std::unique_ptr<Texture> createTextureFromFile(
+        static std::unique_ptr<Texture> CreateTextureFromFile(
             Device& device, const std::string& filepath);
     private:
-        void createTextureImage(const std::string& filepath);
-        void createTextureImageView(VkImageViewType viewType);
-        void createTextureSampler();
-        VkDescriptorImageInfo mDescriptor{};
-        Device& mDevice;
-        VkImage mTextureImage = nullptr;
-        VkDeviceMemory mTextureImageMemory = nullptr;
-        VkImageView mTextureImageView = nullptr;
-        VkSampler mTextureSampler = nullptr;
-        VkFormat mFormat;
-        VkImageLayout mTextureLayout;
-        uint32_t mMipLevels{ 1 };
-        uint32_t mLayerCount{ 1 };
-        VkExtent3D mExtent{};
+        // Private member functions with uppercase first letters
+        void CreateTextureImage(const std::string& filepath);
+        void CreateTextureImageView(VkImageViewType viewType);
+        void CreateTextureSampler();
+
+        // Member variables with m_ prefix and appropriate pointer conventions
+        VkDescriptorImageInfo m_Descriptor{};
+        Device& m_Device;
+        VkImage m_pTextureImage = VK_NULL_HANDLE;
+        VkDeviceMemory m_pTextureImageMemory = VK_NULL_HANDLE;
+        VkImageView m_pTextureImageView = VK_NULL_HANDLE;
+        VkSampler m_pTextureSampler = VK_NULL_HANDLE;
+        VkFormat m_Format = VK_FORMAT_UNDEFINED;
+        VkImageLayout m_TextureLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        uint32_t m_MipLevels{ 1 };
+        uint32_t m_LayerCount{ 1 };
+        VkExtent3D m_Extent{ 0, 0, 0 };
     };
 }

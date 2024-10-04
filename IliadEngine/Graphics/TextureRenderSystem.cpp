@@ -18,58 +18,58 @@ namespace ili
 
     TextureRenderSystem::TextureRenderSystem(
         Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout)
-        : lveDevice{ device } {
-        createPipelineLayout(globalSetLayout);
-        createPipeline(renderPass);
+        : m_Device{ device } {
+        CreatePipelineLayout(globalSetLayout);
+        CreatePipeline(renderPass);
     }
     TextureRenderSystem::~TextureRenderSystem() {
-        vkDestroyPipelineLayout(lveDevice.GetDevice(), pipelineLayout, nullptr);
+        vkDestroyPipelineLayout(m_Device.GetDevice(), m_PipelineLayout, nullptr);
     }
-    void TextureRenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
+    void TextureRenderSystem::CreatePipelineLayout(VkDescriptorSetLayout globalSetLayout) {
         VkPushConstantRange pushConstantRange{};
         pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
         pushConstantRange.offset = 0;
         pushConstantRange.size = sizeof(TexturePushConstantData);
-        renderSystemLayout =
-            DescriptorSetLayout::Builder(lveDevice)
+        m_RenderSystemLayout =
+            DescriptorSetLayout::Builder(m_Device)
             .AddBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
             .Build();
 
         std::vector<VkDescriptorSetLayout> descriptorSetLayouts
         {
             globalSetLayout,
-            renderSystemLayout->GetDescriptorSetLayout() };
+            m_RenderSystemLayout->GetDescriptorSetLayout() };
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
         pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
         pipelineLayoutInfo.pushConstantRangeCount = 1;
         pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
-        if (vkCreatePipelineLayout(lveDevice.GetDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout) !=
+        if (vkCreatePipelineLayout(m_Device.GetDevice(), &pipelineLayoutInfo, nullptr, &m_PipelineLayout) !=
             VK_SUCCESS) {
             throw std::runtime_error("failed to create pipeline layout!");
         }
     }
-    void TextureRenderSystem::createPipeline(VkRenderPass renderPass) 
+    void TextureRenderSystem::CreatePipeline(VkRenderPass renderPass) 
     {
-        assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
+        assert(m_PipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
         PipelineConfigInfo pipelineConfig{};
         Pipeline::GetDefaultPipelineConfigInfo(pipelineConfig);
         pipelineConfig.renderPass = renderPass;
-        pipelineConfig.pipelineLayout = pipelineLayout;
-        lvePipeline = std::make_unique<Pipeline>(
-            lveDevice,
+        pipelineConfig.pipelineLayout = m_PipelineLayout;
+        m_pPipeline = std::make_unique<Pipeline>(
+            m_Device,
             "Assets/CompiledShaders/texture_shader.vert.spv",
             "Assets/CompiledShaders/texture_shader.frag.spv",
             pipelineConfig);
     }
-    void TextureRenderSystem::renderGameObjects(const FrameInfo& frameInfo, const std::vector<std::unique_ptr<GameObject>>& gameObjects) 
+    void TextureRenderSystem::RenderGameObjects(const FrameInfo& frameInfo, const std::vector<std::unique_ptr<GameObject>>& gameObjects) 
     {
-        lvePipeline->Bind(frameInfo.commandBuffer);
+        m_pPipeline->Bind(frameInfo.commandBuffer);
         vkCmdBindDescriptorSets(
             frameInfo.commandBuffer,
             VK_PIPELINE_BIND_POINT_GRAPHICS,
-            pipelineLayout,
+            m_PipelineLayout,
             0,
             1,
             &frameInfo.globalDescriptorSet,
@@ -83,15 +83,15 @@ namespace ili
 
             // writing descriptor set each frame can slow performance
             // would be more efficient to implement some sort of caching
-            auto imageInfo = modelComponent->GetDiffuseMap()->getImageInfo();
+            auto imageInfo = modelComponent->GetDiffuseMap()->GetImageInfo();
             VkDescriptorSet descriptorSet1;
-            DescriptorWriter(*renderSystemLayout, frameInfo.frameDescriptorPool)
+            DescriptorWriter(*m_RenderSystemLayout, frameInfo.frameDescriptorPool)
                 .WriteImage(0, &imageInfo)
                 .Build(descriptorSet1);
             vkCmdBindDescriptorSets(
                 frameInfo.commandBuffer,
                 VK_PIPELINE_BIND_POINT_GRAPHICS,
-                pipelineLayout,
+                m_PipelineLayout,
                 1,  // first set
                 1,  // set count
                 &descriptorSet1,
@@ -102,7 +102,7 @@ namespace ili
             push.normalMatrix = gameObject->GetTransform()->GetNormalMatrix();
             vkCmdPushConstants(
                 frameInfo.commandBuffer,
-                pipelineLayout,
+                m_PipelineLayout,
                 VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                 0,
                 sizeof(TexturePushConstantData),

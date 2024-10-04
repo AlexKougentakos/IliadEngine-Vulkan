@@ -89,7 +89,7 @@ namespace ili
 			m_UboBuffers[frameIndex]->Flush();
 
 			m_Renderer->BeginSwapChainRenderPass(commandBuffer);
-			m_TextureRenderSystem.value().renderGameObjects(frameInfo, m_pCurrentScene->GetGameObjects());
+			m_TextureRenderSystem.value().RenderGameObjects(frameInfo, m_pCurrentScene->GetGameObjects());
 			m_RenderSystem.value().RenderGameObjects(frameInfo, m_pCurrentScene->GetGameObjects());
 			m_PointLightSystem.value().Render(frameInfo, m_pCurrentScene->GetPointLights());
 			m_Renderer->EndSwapChainRenderPass(commandBuffer);

@@ -559,7 +559,7 @@ namespace ili
         }
     }
 
-    void Device::transitionImageLayout(
+    void Device::TransitionImageLayout(
         VkImage image,
         VkFormat format,
         VkImageLayout oldLayout,
