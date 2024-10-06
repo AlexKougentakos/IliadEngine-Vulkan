@@ -79,7 +79,7 @@ namespace ili
 
 			if (!modelComponent) continue;
 
-			if (!modelComponent->GetModel() || modelComponent->GetDiffuseMap()) continue;
+//			if (!modelComponent->GetModel() || modelComponent->GetDiffuseMap()) continue;
 
 			SimplePushConstantData pushData{};
 

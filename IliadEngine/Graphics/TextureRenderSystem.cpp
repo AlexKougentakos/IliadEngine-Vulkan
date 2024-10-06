@@ -90,20 +90,17 @@ namespace ili
         {
             const auto modelComponent = gameObject->GetComponent<ModelComponent>();
 
-			const bool canRender = modelComponent && modelComponent->GetModel() && 
-                (modelComponent->GetDiffuseMap() || 
-                    modelComponent->GetNormalMap() ||
-                    modelComponent->GetMetallicMap() || 
-                    modelComponent->GetRoughnessMap());
+			const bool canRender = modelComponent && modelComponent->GetModel() && modelComponent->GetMaterial();
 
             if (!canRender) continue;
 
+            const auto material = modelComponent->GetMaterial();
             // Retrieve the image infos for all textures
-            VkDescriptorImageInfo albedoImageInfo = modelComponent->GetDiffuseMap()->GetImageInfo();
-            VkDescriptorImageInfo normalImageInfo = modelComponent->GetNormalMap()->GetImageInfo();   // Implement GetNormalMap()
-            VkDescriptorImageInfo metallicImageInfo = modelComponent->GetMetallicMap()->GetImageInfo(); // Implement GetMetallicMap()
-            VkDescriptorImageInfo roughnessImageInfo = modelComponent->GetRoughnessMap()->GetImageInfo(); // Implement GetRoughnessMap()
-            VkDescriptorImageInfo aoImageInfo = modelComponent->GetAOMap()->GetImageInfo(); // Implement GetAOMap()
+            VkDescriptorImageInfo albedoImageInfo = material->GetAlbedoMap()->GetImageInfo();
+            VkDescriptorImageInfo normalImageInfo = material->GetNormalMap()->GetImageInfo();
+            VkDescriptorImageInfo metallicImageInfo = material->GetMetallicMap()->GetImageInfo();
+            VkDescriptorImageInfo roughnessImageInfo = material->GetRoughnessMap()->GetImageInfo();
+            VkDescriptorImageInfo aoImageInfo = material->GetAOMap()->GetImageInfo();
 
             std::array<VkWriteDescriptorSet, 4> descriptorWrites{};
 

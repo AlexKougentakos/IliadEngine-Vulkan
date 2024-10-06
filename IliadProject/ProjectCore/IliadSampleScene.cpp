@@ -82,12 +82,15 @@ void IliadSampleScene::Initialize()
     auto floorObject = CreateGameObject<ili::GameObject>();
     auto model = floorObject->AddComponent<ili::ModelComponent>();
     model->SetModel(floor);
-    //model->SetDiffuseMap(texture);
-	model->SetNormalMap(normal);
-	model->SetRoughnessMap(rough);
-	model->SetMetallicMap(metallic);
-	model->SetDiffuseMap(colour);
-	model->SetAOMap(ao);
+  
+	const std::shared_ptr<ili::Material> material = std::make_shared<ili::Material>();
+	material->SetAlbedo(colour);
+	material->SetNormal(normal);
+	material->SetMetallic(metallic);
+	material->SetRoughness(rough);
+	material->SetAO(ao);
+
+	model->SetMaterial(material);
     floorObject->GetTransform()->SetScale({ 5.f, 1.f, 5.f });
 }
 
