@@ -27,12 +27,13 @@ namespace ili
 
         std::shared_ptr<Model> LoadModelFromFile(const std::string& filepath) const;
         std::shared_ptr<Texture> LoadTextureFromFile(const std::string& filepath) const;
-
+        std::shared_ptr<Texture> CreateTextureFromColor(const glm::vec4& color);
     private:
         friend class Singleton<ContentLoader>;
         ContentLoader() = default;
 
         ili::Device* m_pDevice = nullptr;
+        std::shared_ptr<Texture> LoadTextureFromData(VkExtent3D extent, VkFormat format, const void* data, VkDeviceSize dataSize) const;
 
         struct Builder
         {

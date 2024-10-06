@@ -31,18 +31,26 @@ namespace ili
         m_LayerCount{ 1 }
     {
         VkImageAspectFlags aspectMask = 0;
-        VkImageLayout imageLayout;
+        VkImageLayout imageLayout = VK_IMAGE_LAYOUT_UNDEFINED; // Initialize with default value
 
         if (usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
         {
             aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         }
-
-        if (usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+        else if (usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
         {
             aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
             imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        }
+        else if (usage & VK_IMAGE_USAGE_SAMPLED_BIT)
+        {
+            aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        }
+        else
+        {
+            throw std::runtime_error("Unsupported image usage flags!");
         }
 
         // Don't like this, should I be using an image array instead of multiple images?
@@ -104,10 +112,25 @@ namespace ili
                 throw std::runtime_error("failed to create sampler!");
             }
 
-            VkImageLayout samplerImageLayout = imageLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-                ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-                : VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+            VkImageLayout samplerImageLayout;
+            if (imageLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+            {
+                samplerImageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            }
+            else if (imageLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+            {
+                samplerImageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+            }
+            else if (imageLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+            {
+                samplerImageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            }
+            else
+            {
+                samplerImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+            }
 
+            // Set the descriptor
             m_Descriptor.sampler = m_pTextureSampler;
             m_Descriptor.imageView = m_pTextureImageView;
             m_Descriptor.imageLayout = samplerImageLayout;
@@ -133,6 +156,57 @@ namespace ili
         m_Descriptor.sampler = m_pTextureSampler;
         m_Descriptor.imageView = m_pTextureImageView;
         m_Descriptor.imageLayout = m_TextureLayout;
+    }
+
+    void Texture::UploadData(const void* data, VkDeviceSize size)
+    {
+        // Create staging buffer
+        VkBuffer stagingBuffer;
+        VkDeviceMemory stagingBufferMemory;
+        m_Device.CreateBuffer(
+            size,
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            stagingBuffer,
+            stagingBufferMemory);
+
+        // Copy data to staging buffer
+        void* bufferData;
+        vkMapMemory(m_Device.GetDevice(), stagingBufferMemory, 0, size, 0, &bufferData);
+        memcpy(bufferData, data, static_cast<size_t>(size));
+        vkUnmapMemory(m_Device.GetDevice(), stagingBufferMemory);
+
+        // Transition image layout to transfer destination
+        m_Device.TransitionImageLayout(
+            m_pTextureImage,
+            m_Format,
+            VK_IMAGE_LAYOUT_UNDEFINED,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            m_MipLevels,
+            m_LayerCount);
+
+        // Copy buffer data to image
+        m_Device.CopyBufferToImage(
+            stagingBuffer,
+            m_pTextureImage,
+            m_Extent.width,
+            m_Extent.height,
+            m_LayerCount);
+
+        // Transition image layout to shader read
+        m_Device.TransitionImageLayout(
+            m_pTextureImage,
+            m_Format,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            m_MipLevels,
+            m_LayerCount);
+
+        m_TextureLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+        // Clean up staging resources
+        vkDestroyBuffer(m_Device.GetDevice(), stagingBuffer, nullptr);
+        vkFreeMemory(m_Device.GetDevice(), stagingBufferMemory, nullptr);
     }
 
     void Texture::CreateTextureImage(const std::string& filepath)

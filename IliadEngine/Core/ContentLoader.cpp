@@ -117,4 +117,37 @@ namespace ili
 
 		return std::make_shared<Texture>(*m_pDevice, filepath);
     }
+
+    std::shared_ptr<Texture> ContentLoader::CreateTextureFromColor(const glm::vec4& color)
+    {
+        // Create a 1x1 pixel with the specified color
+        VkExtent3D extent = { 1, 1, 1 };
+        VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
+
+        uint8_t pixelData[4];
+        //todo: find out why really small values close to 0 bug out
+        pixelData[0] = static_cast<uint8_t>(glm::clamp(color.r, 0.05f, 1.0f) * 255);
+        pixelData[1] = static_cast<uint8_t>(glm::clamp(color.g, 0.05f, 1.0f) * 255);
+        pixelData[2] = static_cast<uint8_t>(glm::clamp(color.b, 0.05f, 1.0f) * 255);
+        pixelData[3] = static_cast<uint8_t>(glm::clamp(color.a, 0.05f, 1.0f) * 255);
+
+        return LoadTextureFromData(extent, format, pixelData, sizeof(pixelData));
+    }
+
+    std::shared_ptr<Texture> ContentLoader::LoadTextureFromData(VkExtent3D extent, VkFormat format, const void* data, VkDeviceSize dataSize) const
+    {
+        assert(m_pDevice != nullptr && "Device is not initialized");
+
+        auto texture = std::make_unique<Texture>(
+            *m_pDevice,
+            format,
+            extent,
+            VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+            VK_SAMPLE_COUNT_1_BIT);
+
+        // Upload data to the texture
+        texture->UploadData(data, dataSize);
+
+        return texture;
+    }
 }

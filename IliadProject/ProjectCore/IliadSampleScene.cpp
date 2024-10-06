@@ -15,11 +15,13 @@ void IliadSampleScene::Initialize()
     const std::shared_ptr<ili::Model> floor = ili::ContentLoader::GetInstance().LoadModelFromFile("Assets/Models/quad.obj");
 
     auto normal = ili::ContentLoader::GetInstance().LoadTextureFromFile("Assets/Textures/normal.png");
-    auto rough = ili::ContentLoader::GetInstance().LoadTextureFromFile("Assets/Textures/rough.jpeg");
-    auto colour = ili::ContentLoader::GetInstance().LoadTextureFromFile("Assets/Textures/colour.jpeg");
-    auto metallic = ili::ContentLoader::GetInstance().LoadTextureFromFile("Assets/Textures/metallic.jpeg");
+    //auto rough = ili::ContentLoader::GetInstance().LoadTextureFromFile("Assets/Textures/gray.png");
+    auto rough = ili::ContentLoader::GetInstance().CreateTextureFromColor({ 0.05f, 0.05f, 0.05f, 1.f });
+    //auto colour = ili::ContentLoader::GetInstance().LoadTextureFromFile("Assets/Textures/colour.jpeg");
+    auto colour = ili::ContentLoader::GetInstance().CreateTextureFromColor({ 1.f, 0.f, 0.f, 1.f });
+    //auto metallic = ili::ContentLoader::GetInstance().LoadTextureFromFile("Assets/Textures/metallic.jpeg");
+    auto metallic = ili::ContentLoader::GetInstance().CreateTextureFromColor({1.f, 1.f, 1.f, 1.f});
     auto ao = ili::ContentLoader::GetInstance().LoadTextureFromFile("Assets/Textures/ao.jpeg");
-
 
 
     auto texture2 = ili::ContentLoader::GetInstance().LoadTextureFromFile("Assets/Textures/bg3.png");

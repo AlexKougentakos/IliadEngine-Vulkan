@@ -36,6 +36,7 @@ namespace ili
 
         // Member functions with uppercase first letters and brace on next line
         void UpdateDescriptor();
+        void UploadData(const void* data, VkDeviceSize size);
         void TransitionLayout(
             VkCommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout);
         static std::unique_ptr<Texture> CreateTextureFromFile(
