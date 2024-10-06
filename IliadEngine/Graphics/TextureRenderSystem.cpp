@@ -25,28 +25,36 @@ namespace ili
     TextureRenderSystem::~TextureRenderSystem() {
         vkDestroyPipelineLayout(m_Device.GetDevice(), m_PipelineLayout, nullptr);
     }
-    void TextureRenderSystem::CreatePipelineLayout(VkDescriptorSetLayout globalSetLayout) {
+    void TextureRenderSystem::CreatePipelineLayout(VkDescriptorSetLayout globalSetLayout) 
+    {
         VkPushConstantRange pushConstantRange{};
         pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
         pushConstantRange.offset = 0;
         pushConstantRange.size = sizeof(TexturePushConstantData);
-        m_RenderSystemLayout =
-            DescriptorSetLayout::Builder(m_Device)
-            .AddBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+
+        // Update the descriptor set layout
+        m_RenderSystemLayout = DescriptorSetLayout::Builder(m_Device)
+            .AddBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT) // Albedo Map
+            .AddBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT) // Normal Map
+            .AddBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT) // Metallic Map
+            .AddBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT) // Roughness Map
+            .AddBinding(4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT) // AO Map (Optional)
             .Build();
 
         std::vector<VkDescriptorSetLayout> descriptorSetLayouts
         {
             globalSetLayout,
-            m_RenderSystemLayout->GetDescriptorSetLayout() };
+            m_RenderSystemLayout->GetDescriptorSetLayout()
+        };
+
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
         pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
         pipelineLayoutInfo.pushConstantRangeCount = 1;
         pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
-        if (vkCreatePipelineLayout(m_Device.GetDevice(), &pipelineLayoutInfo, nullptr, &m_PipelineLayout) !=
-            VK_SUCCESS) {
+
+        if (vkCreatePipelineLayout(m_Device.GetDevice(), &pipelineLayoutInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS) {
             throw std::runtime_error("failed to create pipeline layout!");
         }
     }
@@ -63,7 +71,9 @@ namespace ili
             "Assets/CompiledShaders/texture_shader.frag.spv",
             pipelineConfig);
     }
-    void TextureRenderSystem::RenderGameObjects(const FrameInfo& frameInfo, const std::vector<std::unique_ptr<GameObject>>& gameObjects) 
+
+    void TextureRenderSystem::RenderGameObjects(
+        const FrameInfo& frameInfo, const std::vector<std::unique_ptr<GameObject>>& gameObjects)
     {
         m_pPipeline->Bind(frameInfo.commandBuffer);
         vkCmdBindDescriptorSets(
@@ -75,19 +85,39 @@ namespace ili
             &frameInfo.globalDescriptorSet,
             0,
             nullptr);
+
         for (const auto& gameObject : gameObjects)
         {
             const auto modelComponent = gameObject->GetComponent<ModelComponent>();
-            // skip objects that don't have both a model and texture
-            if (!modelComponent || !modelComponent->GetDiffuseMap()) continue;
 
-            // writing descriptor set each frame can slow performance
-            // would be more efficient to implement some sort of caching
-            auto imageInfo = modelComponent->GetDiffuseMap()->GetImageInfo();
+			const bool canRender = modelComponent && modelComponent->GetModel() && 
+                (modelComponent->GetDiffuseMap() || 
+                    modelComponent->GetNormalMap() ||
+                    modelComponent->GetMetallicMap() || 
+                    modelComponent->GetRoughnessMap());
+
+            if (!canRender) continue;
+
+            // Retrieve the image infos for all textures
+            VkDescriptorImageInfo albedoImageInfo = modelComponent->GetDiffuseMap()->GetImageInfo();
+            VkDescriptorImageInfo normalImageInfo = modelComponent->GetNormalMap()->GetImageInfo();   // Implement GetNormalMap()
+            VkDescriptorImageInfo metallicImageInfo = modelComponent->GetMetallicMap()->GetImageInfo(); // Implement GetMetallicMap()
+            VkDescriptorImageInfo roughnessImageInfo = modelComponent->GetRoughnessMap()->GetImageInfo(); // Implement GetRoughnessMap()
+            VkDescriptorImageInfo aoImageInfo = modelComponent->GetAOMap()->GetImageInfo(); // Implement GetAOMap()
+
+            std::array<VkWriteDescriptorSet, 4> descriptorWrites{};
+
             VkDescriptorSet descriptorSet1;
-            DescriptorWriter(*m_RenderSystemLayout, frameInfo.frameDescriptorPool)
-                .WriteImage(0, &imageInfo)
-                .Build(descriptorSet1);
+            DescriptorWriter writer(*m_RenderSystemLayout, frameInfo.frameDescriptorPool);
+
+            writer.WriteImage(0, &albedoImageInfo);
+            writer.WriteImage(1, &normalImageInfo);
+            writer.WriteImage(2, &metallicImageInfo);
+            writer.WriteImage(3, &roughnessImageInfo);
+            writer.WriteImage(4, &aoImageInfo);
+
+            writer.Build(descriptorSet1);
+
             vkCmdBindDescriptorSets(
                 frameInfo.commandBuffer,
                 VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -97,6 +127,8 @@ namespace ili
                 &descriptorSet1,
                 0,
                 nullptr);
+
+            // Push constants
             TexturePushConstantData push{};
             push.modelMatrix = gameObject->GetTransform()->GetMatrix();
             push.normalMatrix = gameObject->GetTransform()->GetNormalMatrix();
@@ -107,8 +139,10 @@ namespace ili
                 0,
                 sizeof(TexturePushConstantData),
                 &push);
-            gameObject->GetComponent<ModelComponent>()->GetModel()->Bind(frameInfo.commandBuffer);
-            gameObject->GetComponent<ModelComponent>()->GetModel()->Draw(frameInfo.commandBuffer);
+
+            modelComponent->GetModel()->Bind(frameInfo.commandBuffer);
+            modelComponent->GetModel()->Draw(frameInfo.commandBuffer);
         }
     }
+
 }

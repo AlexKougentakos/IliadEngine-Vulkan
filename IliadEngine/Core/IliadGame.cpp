@@ -40,7 +40,7 @@ namespace ili
 
 		// Create viewer object
 		const auto viewerObject = m_pCurrentScene->CreateGameObject<GameObject>();
-		viewerObject->GetTransform()->SetPosition({ 0.f, -3.f, -5.f });
+		viewerObject->GetTransform()->SetPosition({ 0.f, -3.f, -4.f });
 		viewerObject->GetTransform()->SetRotationDegrees({ 180.f, 0.f, 0.f });
 
 		// Initialize current time
@@ -120,7 +120,7 @@ namespace ili
 
 			m_Renderer->BeginSwapChainRenderPass(commandBuffer);
 			m_TextureRenderSystem.value().RenderGameObjects(frameInfo, m_pCurrentScene->GetGameObjects());
-			m_RenderSystem.value().RenderGameObjects(frameInfo, m_pCurrentScene->GetGameObjects());
+			//m_RenderSystem.value().RenderGameObjects(frameInfo, m_pCurrentScene->GetGameObjects());
 			m_PointLightSystem.value().Render(frameInfo, m_pCurrentScene->GetPointLights());
 			m_Renderer->EndSwapChainRenderPass(commandBuffer);
 			m_Renderer->EndFrame();
@@ -129,8 +129,8 @@ namespace ili
 
 	void IliadGame::InitializeWindow()
 	{
-		static constexpr int WIDTH = 800;
-		static constexpr int HEIGHT = 600;
+		static constexpr int WIDTH = 1600;
+		static constexpr int HEIGHT = 900;
 
 		m_Window = std::make_unique<Window>(WIDTH, HEIGHT, "Iliad Game");
 
