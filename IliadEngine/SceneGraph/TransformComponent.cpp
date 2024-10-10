@@ -61,31 +61,23 @@ namespace ili
     // Matrix Calculations
     glm::mat4 TransformComponent::GetMatrix() const
     {
-        // Calculate individual rotation matrices
-        const float c1 = glm::cos(m_RotationRadians.y);
-        const float s1 = glm::sin(m_RotationRadians.y);
-        const float c2 = glm::cos(m_RotationRadians.x);
-        const float s2 = glm::sin(m_RotationRadians.x);
-        const float c3 = glm::cos(m_RotationRadians.z);
-        const float s3 = glm::sin(m_RotationRadians.z);
-
-        // Construct the rotation matrix using Tait-Bryan angles (Y-X-Z order)
-        const glm::mat4 rotationMatrix = glm::mat4(
-            glm::vec4(c1 * c3 + s1 * s2 * s3, c2 * s3, c1 * s2 * s3 - c3 * s1, 0.0f),
-            glm::vec4(c3 * s1 * s2 - c1 * s3, c2 * c3, c1 * c3 * s2 + s1 * s3, 0.0f),
-            glm::vec4(c2 * s1, -s2, c1 * c2, 0.0f),
-            glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)
-        );
-
-        // Apply scaling
-        const glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), m_Scale);
+        // Start with an identity matrix
+        glm::mat4 modelMatrix = glm::mat4(1.0f);
 
         // Apply translation
-        const glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), m_Position);
+        modelMatrix = glm::translate(modelMatrix, m_Position);
 
-        // Combine transformations: Translation * Rotation * Scale
-        return translationMatrix * rotationMatrix * scalingMatrix;
+        // Apply rotation in Y-X-Z order
+        modelMatrix = glm::rotate(modelMatrix, m_RotationRadians.y, glm::vec3(0.0f, 1.0f, 0.0f)); // Y-axis
+        modelMatrix = glm::rotate(modelMatrix, m_RotationRadians.x, glm::vec3(1.0f, 0.0f, 0.0f)); // X-axis
+        modelMatrix = glm::rotate(modelMatrix, m_RotationRadians.z, glm::vec3(0.0f, 0.0f, 1.0f)); // Z-axis
+
+        // Apply scaling
+        modelMatrix = glm::scale(modelMatrix, m_Scale);
+
+        return modelMatrix;
     }
+
 
     glm::mat3 TransformComponent::GetNormalMatrix() const
     {

@@ -10,3 +10,4 @@ ili::Material::Material()
 	m_RoughnessMap = ContentLoader::GetInstance().CreateTextureFromColor({ 0.5f, 0.5f, 0.5f, 1.f });
 	m_AOMap = ContentLoader::GetInstance().CreateTextureFromColor({ 1.f, 1.f, 1.f, 1.f });
 }
+

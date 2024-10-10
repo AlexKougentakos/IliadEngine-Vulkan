@@ -122,14 +122,14 @@ namespace ili
     {
         // Create a 1x1 pixel with the specified color
         VkExtent3D extent = { 1, 1, 1 };
-        VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
+        VkFormat format = VK_FORMAT_R8G8B8A8_SRGB; // Changed to sRGB format
 
         uint8_t pixelData[4];
-        //todo: find out why really small values close to 0 bug out
-        pixelData[0] = static_cast<uint8_t>(glm::clamp(color.r, 0.05f, 1.0f) * 255);
-        pixelData[1] = static_cast<uint8_t>(glm::clamp(color.g, 0.05f, 1.0f) * 255);
-        pixelData[2] = static_cast<uint8_t>(glm::clamp(color.b, 0.05f, 1.0f) * 255);
-        pixelData[3] = static_cast<uint8_t>(glm::clamp(color.a, 0.05f, 1.0f) * 255);
+        // Ensure color components are within [0, 1] before scaling
+        pixelData[0] = static_cast<uint8_t>(glm::clamp(color.r, 0.0f, 1.0f) * 255);
+        pixelData[1] = static_cast<uint8_t>(glm::clamp(color.g, 0.0f, 1.0f) * 255);
+        pixelData[2] = static_cast<uint8_t>(glm::clamp(color.b, 0.0f, 1.0f) * 255);
+        pixelData[3] = static_cast<uint8_t>(glm::clamp(color.a, 0.0f, 1.0f) * 255);
 
         return LoadTextureFromData(extent, format, pixelData, sizeof(pixelData));
     }

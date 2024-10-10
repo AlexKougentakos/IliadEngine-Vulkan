@@ -62,7 +62,6 @@ namespace ili
 
 		void RootUpdate();
 
-
 		//glm::vec3 m_Color{};
 		TransformComponent* m_pTransformComponent{};
 

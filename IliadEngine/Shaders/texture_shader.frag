@@ -27,7 +27,8 @@ layout(set = 1, binding = 2) uniform sampler2D metallicMap;
 layout(set = 1, binding = 3) uniform sampler2D roughnessMap;
 layout(set = 1, binding = 4) uniform sampler2D aoMap; // Optional
 
-layout(push_constant) uniform Push {
+layout(push_constant) uniform Push 
+{
     mat4 modelMatrix;
     mat4 normalMatrix;
 } push;
@@ -75,68 +76,35 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0) {
 }
 
 void main() {
-    // Retrieve material properties from textures
-    vec3 albedo = pow(texture(albedoMap, fragUv).rgb, vec3(2.2)); // Convert from sRGB to linear space
-    float metallic = texture(metallicMap, fragUv).r;
-    float roughness = texture(roughnessMap, fragUv).r;
-    float ao = texture(aoMap, fragUv).r; // Optional
-
-    // Normal mapping
-    vec3 N = texture(normalMap, fragUv).rgb;
-    N = N * 2.0 - 1.0; // Transform from [0,1] to [-1,1]
-    N = normalize(N);
-
-    // Transform normal to world space
-    N = normalize(mat3(push.normalMatrix) * N);
-
-    // View vector
-    vec3 V = normalize(ubo.invView[3].xyz - fragPosWorld);
-
-    // Reflectance at normal incidence (F0)
-    vec3 F0 = vec3(0.04); // Default for non-metals
-    F0 = mix(F0, albedo, metallic);
-
-    // Lighting calculations
-    vec3 Lo = vec3(0.0);
-
-    for (int i = 0; i < ubo.numLights; ++i) {
-        PointLight light = ubo.pointLights[i];
+    // Fixed normal pointing upwards in world space
+    vec3 N = vec3(0.0, 0.0, 1.0);
+    
+    // Ambient lighting
+    vec3 ambient = ubo.ambientLightColor.rgb * vec3(1.0, 1.0, 1.0); // White ambient
+    vec3 lighting = ambient;
+    
+    // Diffuse lighting from the first point light
+    if (ubo.numLights > 0) {
+        PointLight light = ubo.pointLights[0];
         vec3 L = normalize(light.position.xyz - fragPosWorld);
-        vec3 H = normalize(V + L);
-        float distance = length(light.position.xyz - fragPosWorld);
-        float attenuation = 1.0 / (distance * distance);
-        vec3 radiance = light.color.xyz * light.color.w * attenuation;
-
-        // Cook-Torrance BRDF
-        float NDF = DistributionGGX(N, H, roughness);
-        float G = GeometrySmith(N, V, L, roughness);
-        vec3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
-
-        vec3 numerator = NDF * G * F;
-        float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.001;
-        vec3 specular = numerator / denominator;
-
-        // kS is specular reflectance
-        vec3 kS = F;
-        // kD is diffuse reflectance (energy conservation)
-        vec3 kD = vec3(1.0) - kS;
-        kD *= 1.0 - metallic;
-
-        // Lambertian diffuse
         float NdotL = max(dot(N, L), 0.0);
-        Lo += (kD * albedo / PI + specular) * radiance * NdotL;
+        
+        // Compute attenuation (quadratic falloff)
+        float distance = length(light.position.xyz - fragPosWorld);
+        float attenuation = 1.0 / (distance * distance + 0.001); // Prevent division by zero
+        
+        // Radiance (color * intensity * attenuation)
+        vec3 radiance = light.color.xyz * light.color.w * attenuation;
+        
+        // Diffuse component (white albedo)
+        vec3 diffuse = vec3(1.0) * radiance * NdotL;
+        
+        lighting += diffuse;
     }
-
-    // Ambient lighting (using AO map if available)
-    vec3 ambient = vec3(0.03) * albedo * ao * ubo.ambientLightColor.w;
-
-    vec3 color = ambient + Lo;
-
-    // HDR tonemapping (optional)
-    color = color / (color + vec3(1.0));
-
-    // Gamma correction
-    color = pow(color, vec3(1.0 / 2.2));
-
+    
+    // Remove gamma correction
+    vec3 color = lighting;
+    
     outColor = vec4(color, 1.0);
 }
+

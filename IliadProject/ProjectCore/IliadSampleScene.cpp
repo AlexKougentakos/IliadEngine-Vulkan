@@ -9,90 +9,59 @@
 
 void IliadSampleScene::Initialize()
 {
+    // Clear existing scene (if necessary)
+    // This depends on your engine's implementation
+    // For example:
+    // ClearScene();
+
     // Load models
-    const std::shared_ptr<ili::Model> bunnyModel = ili::ContentLoader::GetInstance().LoadModelFromFile("Assets/Models/viking_room.obj");
-    //const std::shared_ptr<ili::Model> vase = ili::ContentLoader::GetInstance().LoadModelFromFile("Assets/Models/bg3_uw.obj");
-    const std::shared_ptr<ili::Model> floor = ili::ContentLoader::GetInstance().LoadModelFromFile("Assets/Models/quad.obj");
+    const std::shared_ptr<ili::Model> planeModel = ili::ContentLoader::GetInstance().LoadModelFromFile("Assets/Models/quad.obj");
+    const std::shared_ptr<ili::Model> sphereModel = ili::ContentLoader::GetInstance().LoadModelFromFile("Assets/Models/sphere.obj");
 
-    auto normal = ili::ContentLoader::GetInstance().LoadTextureFromFile("Assets/Textures/normal.png");
-    //auto rough = ili::ContentLoader::GetInstance().LoadTextureFromFile("Assets/Textures/gray.png");
-    auto rough = ili::ContentLoader::GetInstance().CreateTextureFromColor({ 0.05f, 0.05f, 0.05f, 1.f });
-    //auto colour = ili::ContentLoader::GetInstance().LoadTextureFromFile("Assets/Textures/colour.jpeg");
-    auto colour = ili::ContentLoader::GetInstance().CreateTextureFromColor({ 1.f, 0.f, 0.f, 1.f });
-    //auto metallic = ili::ContentLoader::GetInstance().LoadTextureFromFile("Assets/Textures/metallic.jpeg");
-    auto metallic = ili::ContentLoader::GetInstance().CreateTextureFromColor({1.f, 1.f, 1.f, 1.f});
-    auto ao = ili::ContentLoader::GetInstance().LoadTextureFromFile("Assets/Textures/ao.jpeg");
+ //   auto go1 = CreateGameObject<ili::GameObject>();
+	//go1->AddComponent<ili::ModelComponent>(planeModel);
+	//go1->GetTransform()->GetScale() = { 20.f, 1.f, 20.f };
 
+	//auto go2 = CreateGameObject<ili::GameObject>();
+	//go2->AddComponent<ili::ModelComponent>(planeModel);
+	//go2->GetTransform()->GetScale() = { 20.f, 1.f, 20.f };
+ //   go2->GetTransform()->SetRotationDegrees(glm::vec3{180.f, 0.f, 0.f});
+	//go2->GetTransform()->SetPosition(glm::vec3{ 0.f, -2.f, 0.f });
 
-    auto texture2 = ili::ContentLoader::GetInstance().LoadTextureFromFile("Assets/Textures/bg3.png");
+	//auto go3 = CreateGameObject<ili::GameObject>();
+	//go3->AddComponent<ili::ModelComponent>(planeModel);
+	//go3->GetTransform()->GetScale() = { 20.f, 1.f, 20.f };
+	//go3->GetTransform()->SetRotationDegrees(glm::vec3{ 0.f, 0.f, 90.f });
+	//go3->GetTransform()->SetPosition(glm::vec3{ 1.f, -1.f, 0.f });
 
-    // Create a single bunny at the center
-    //auto bunny = CreateGameObject<ili::GameObject>();
-    //auto modelComponent = bunny->AddComponent<ili::ModelComponent>();
-    //modelComponent->SetModel(vase);
-    //modelComponent->SetDiffuseMap(texture2);
-    //bunny->GetTransform()->SetPosition({ 0.f, -1.8f, 0.f }); // Center
-    //bunny->GetTransform()->SetRotationDegrees({ 0.f, 180.f, 180.f });
-    //bunny->GetTransform()->SetScale({ 0.02f, 0.02f, 0.02f });
+	//auto go4 = CreateGameObject<ili::GameObject>();
+	//go4->AddComponent<ili::ModelComponent>(planeModel);
+	//go4->GetTransform()->GetScale() = { 20.f, 1.f, 20.f };
+	//go4->GetTransform()->SetRotationDegrees(glm::vec3{ 0.f, 0.f, 90.f });
+	//go4->GetTransform()->SetPosition(glm::vec3{ -1.f, -1.f, 0.f });
 
-    // Define 5 unique light colors
-    const std::vector<glm::vec3> lightColors =
-    {
-        {1.f, 0.f, 0.f}, // Red
-        {0.f, 1.f, 0.f}, // Green
-        {0.f, 0.f, 1.f}, // Blue
-        {1.f, 1.f, 0.f}, // Yellow
-        {1.f, 0.f, 1.f}  // Magenta
-        // Removed Cyan to have 5 colors
-    };
+	//auto go5 = CreateGameObject<ili::GameObject>();
+	//go5->AddComponent<ili::ModelComponent>(planeModel);
+	//go5->GetTransform()->GetScale() = { 20.f, 1.f, 20.f };
+	//go5->GetTransform()->SetRotationDegrees(glm::vec3{ 90.f, 0.f, 0.f });
+	//go5->GetTransform()->SetPosition(glm::vec3{ 0.f, -1.f, 1.f });
 
-    constexpr float radius = 1.25f; // Distance from the bunny
+	auto go6 = CreateGameObject<ili::GameObject>();
 
-    // Create top and bottom lights
-    for (size_t i = 0; i < lightColors.size(); ++i)
-    {
-        // Top Light
-        {
-            const auto pointLight = CreatePointLight(.75f, 0.1f, lightColors[i]);
-            const float angle = static_cast<float>(i) / lightColors.size() * 2.0f * glm::pi<float>();
-            pointLight->GetTransform()->SetPosition({
-                radius * std::cos(angle),
-                -1.0f, // Top light height
-                radius * std::sin(angle)
-                });
-            pointLight->SetColor(lightColors[i]);
-            movingLights.push_back(MovingLight{ pointLight, angle, radius, 1}); // Clockwise
-        }
+	auto goldMat = std::make_shared<ili::Material>();
+	//goldMat->SetAlbedo({ 1.f, 0.86f, 0.67f });
+	goldMat->SetAlbedo({ 1.f, 1.f, 1.f });
+	goldMat->SetMetallic(1.f);
+	goldMat->SetRoughness(0.3f);
 
-        // Bottom Light (Duplicate with opposite direction)
-        {
-            const auto pointLight = CreatePointLight(0.6f, 0.1f, lightColors[i]);
-            const float angle = static_cast<float>(i) / lightColors.size() * 2.0f * glm::pi<float>();
-            pointLight->GetTransform()->SetPosition({
-                radius * std::cos(angle),
-                -3.75f, // Bottom light height
-                radius * std::sin(angle)
-                });
-            pointLight->SetColor(lightColors[i]);
-            movingLights.push_back({ pointLight, angle, radius, -1 }); // Counter-clockwise
-        }
-    }
+	go6->AddComponent<ili::ModelComponent>(sphereModel)->SetMaterial(goldMat);
+	go6->GetTransform()->SetPosition(glm::vec3{ 0.f, -1.f, 0.f });
+	go6->GetTransform()->SetScale({ 0.3, 0.3, 0.3 });
 
-    // Create the floor
-    auto floorObject = CreateGameObject<ili::GameObject>();
-    auto model = floorObject->AddComponent<ili::ModelComponent>();
-    model->SetModel(floor);
-  
-	const std::shared_ptr<ili::Material> material = std::make_shared<ili::Material>();
-	material->SetAlbedo(colour);
-	material->SetNormal(normal);
-	material->SetMetallic(metallic);
-	material->SetRoughness(rough);
-	material->SetAO(ao);
-
-	model->SetMaterial(material);
-    floorObject->GetTransform()->SetScale({ 5.f, 1.f, 5.f });
+	auto light = CreatePointLight(2.f, 0.1f, {1.f, 0.f, 0.f});
+	light->GetTransform()->SetPosition(glm::vec3{ 0.f, -2.f, -2.f });
 }
+
 
 void IliadSampleScene::Update(float deltaTime)
 {
